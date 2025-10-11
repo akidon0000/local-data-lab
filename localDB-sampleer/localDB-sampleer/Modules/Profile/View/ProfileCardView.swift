@@ -12,7 +12,6 @@ struct ProfileCardView: View {
     @Environment(\.modelContext) var modelContext
     @Query(sort: \ProfileCard.name, order: .reverse) var profileCards: [ProfileCard]
     @State var errorMessage: String?
-    @State var backgroundTotalCards: Int = 0
     @State var showDeleteAllAlert = false
     
     var body: some View {
@@ -21,11 +20,13 @@ struct ProfileCardView: View {
                 // 名刺リスト
                 List {
                     ForEach(profileCards, id: \.name) { card in
-//                        BusinessCardRow(card: card)
+                        ProfileCardRow(card: card)
                     }
                     .onDelete { indexSet in
                         for index in indexSet {
-//                            deleteBusinessCard(businessCards[index])
+                            let cardToDelete = profileCards[index]
+                            modelContext.delete(cardToDelete)
+                            try? modelContext.save()
                         }
                     }
                 }
@@ -37,18 +38,12 @@ struct ProfileCardView: View {
                         .background(Color(.systemRed).opacity(0.1))
                 }
             }
-            .navigationTitle("名刺一覧 総名刺数: (\(backgroundTotalCards))枚")
+            .navigationTitle("名刺一覧 総名刺数: (\(profileCards.count))枚")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     HStack {
                         Menu {
-                            Button("1,000件削除", role: .destructive) { deleteBusinessCards(count: 1000) }
-                            Button("5,000件削除", role: .destructive) { deleteBusinessCards(count: 5000) }
-                            Button("10,000件削除", role: .destructive) { deleteBusinessCards(count: 10000) }
-                            
-                            Divider()
-                            
                             Button("全て削除", role: .destructive) {
                                 showDeleteAllAlert = true
                             }
@@ -58,9 +53,9 @@ struct ProfileCardView: View {
                         }
                         
                         Menu {
-                            Button("1,000件追加") { addBusinessCards(count: 1000) }
-                            Button("5,000件追加") { addBusinessCards(count: 5000) }
-                            Button("10,000件追加") { addBusinessCards(count: 10000) }
+                            Button("1,000件追加") { generateData(count: 1000) }
+                            Button("5,000件追加") { generateData(count: 5000) }
+                            Button("10,000件追加") { generateData(count: 10000) }
                         } label: {
                             Image(systemName: "plus")
                         }
@@ -70,15 +65,20 @@ struct ProfileCardView: View {
             .alert("全ての名刺を削除", isPresented: $showDeleteAllAlert) {
                 Button("キャンセル", role: .cancel) { }
                 Button("削除", role: .destructive) {
-                    deleteAllBusinessCards()
+                    deleteAllData()
                 }
             } message: {
-                Text("全ての名刺（\(backgroundTotalCards)件）を削除しますか？この操作は取り消せません。")
+                Text("全ての名刺（\(profileCards.count)件）を削除しますか？この操作は取り消せません。")
             }
         }
     }
     
-    func deleteBusinessCards(count: Int) {}
-    func addBusinessCards(count: Int) {}
-    func deleteAllBusinessCards() {}
+    func generateData(count: Int) {
+        ProfileCard.generateData(modelContext: modelContext, count: count)
+    }
+    
+    func deleteAllData() {
+        ProfileCard.deleteAllData(modelContext: modelContext)
+    }
 }
+

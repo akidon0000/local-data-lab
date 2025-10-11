@@ -8,15 +8,45 @@
 import Foundation
 import SwiftData
 
-@Model
-class ProfileCard {
+@Model class ProfileCard {
     var name: String
     var createdAt: Date
     
-    init(
-        name: String
-    ) {
+    init(name: String, createdAt: Date = Date()) {
         self.name = name
-        self.createdAt = Date()
+        self.createdAt = createdAt
+    }
+    
+    static func generateData(modelContext: ModelContext, count: Int = 1) {
+        for i in 1...count {
+            let instance = ProfileCard(name: "User \(i)")
+            modelContext.insert(instance)
+        }
+        
+        do {
+            try modelContext.save()
+        } catch {
+            print("データの保存に失敗しました: \(error)")
+        }
+    }
+    
+    static func deleteAllData(modelContext: ModelContext) {
+        do {
+            // 全てのProfileCardを取得
+            let fetchDescriptor = FetchDescriptor<ProfileCard>()
+            let allCards = try modelContext.fetch(fetchDescriptor)
+            
+            // 全てのカードを削除
+            for card in allCards {
+                modelContext.delete(card)
+            }
+            
+            // 変更を保存
+            try modelContext.save()
+            print("全ての名刺データを削除しました（\(allCards.count)件）")
+        } catch {
+            print("データの削除に失敗しました: \(error)")
+        }
     }
 }
+
