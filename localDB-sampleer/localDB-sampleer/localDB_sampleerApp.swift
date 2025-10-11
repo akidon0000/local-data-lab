@@ -26,8 +26,8 @@ struct localDB_sampleerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            InfiniteScroll()
         }
-        .modelContainer(sharedModelContainer)
+//        .modelContainer(sharedModelContainer)
     }
 }
