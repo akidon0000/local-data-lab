@@ -14,6 +14,7 @@ struct localDB_sampleerApp: App {
         let schema = Schema([
             Trip.self,
             Accommodation.self,
+            BusinessCard.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -26,8 +27,8 @@ struct localDB_sampleerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            InfiniteScroll()
+            InfiniteScrollView()
         }
-//        .modelContainer(sharedModelContainer)
+        .modelContainer(sharedModelContainer)
     }
 }
