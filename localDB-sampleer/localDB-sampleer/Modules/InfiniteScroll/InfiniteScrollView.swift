@@ -16,12 +16,21 @@ struct InfiniteScrollView: View {
     @State var currentPage = 0
     @State var hasMoreData = true
     
-    // 無限スクロール用のプロパティ
-    let pageSize = 20
+    // 計算プロパティ
+    var totalCards: Int {
+        businessCards.count
+    }
 
     var body: some View {
         NavigationView {
-            VStack {
+            VStack() {
+                HStack() {
+                    Spacer()
+                    Text("総名刺数: \(totalCards)枚")
+                        .foregroundColor(.secondary)
+                    
+                }
+                
                 if businessCards.isEmpty && !isLoading {
                     Text("名刺がありません")
                         .font(.title2)
@@ -42,8 +51,13 @@ struct InfiniteScrollView: View {
                         if isLoading {
                             HStack {
                                 Spacer()
-                                ProgressView()
-                                    .padding()
+                                VStack(spacing: 8) {
+                                    ProgressView()
+                                    Text("読み込み中...")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding()
                                 Spacer()
                             }
                         }
@@ -54,9 +68,11 @@ struct InfiniteScrollView: View {
                     Text(errorMessage)
                         .foregroundColor(.red)
                         .padding()
+                        .background(Color(.systemRed).opacity(0.1))
                 }
             }
             .navigationTitle("名刺一覧")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     Menu {
