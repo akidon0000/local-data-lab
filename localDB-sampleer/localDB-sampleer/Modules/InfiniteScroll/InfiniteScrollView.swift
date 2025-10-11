@@ -16,8 +16,8 @@ struct InfiniteScrollView: View {
     @State var currentPage = 0
     @State var hasMoreData = true
     @State var showDeleteAllAlert = false
+    @State var backgroundTotalCards: Int = 0
     
-    // 計算プロパティ
     var totalCards: Int {
         businessCards.count
     }
@@ -27,9 +27,14 @@ struct InfiniteScrollView: View {
             VStack() {
                 HStack() {
                     Spacer()
-                    Text("総名刺数: \(totalCards)枚")
-                        .foregroundColor(.secondary)
-                    
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("総名刺数: \(totalCards)枚")
+                            .foregroundColor(.secondary)
+                        
+                        Text("バックグラウンド取得: \(backgroundTotalCards)枚")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
                 }
                 
                 if businessCards.isEmpty && !isLoading {
@@ -38,31 +43,31 @@ struct InfiniteScrollView: View {
                         .foregroundColor(.gray)
                 } else {
                     // 名刺リスト
-                    List {
-                        ForEach(businessCards, id: \.name) { card in
-                            BusinessCardRow(card: card)
-                        }
-                        .onDelete { indexSet in
-                            for index in indexSet {
-                                deleteBusinessCard(businessCards[index])
-                            }
-                        }
-
-                        // ローディングインジケーター
-                        if isLoading {
-                            HStack {
-                                Spacer()
-                                VStack(spacing: 8) {
-                                    ProgressView()
-                                    Text("処理中...")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                .padding()
-                                Spacer()
-                            }
-                        }
-                    }
+//                    List {
+//                        ForEach(businessCards, id: \.name) { card in
+//                            BusinessCardRow(card: card)
+//                        }
+//                        .onDelete { indexSet in
+//                            for index in indexSet {
+//                                deleteBusinessCard(businessCards[index])
+//                            }
+//                        }
+//
+//                        // ローディングインジケーター
+//                        if isLoading {
+//                            HStack {
+//                                Spacer()
+//                                VStack(spacing: 8) {
+//                                    ProgressView()
+//                                    Text("処理中...")
+//                                        .font(.caption)
+//                                        .foregroundColor(.secondary)
+//                                }
+//                                .padding()
+//                                Spacer()
+//                            }
+//                        }
+//                    }
                 }
                 
                 if let errorMessage = errorMessage {
@@ -172,6 +177,49 @@ struct InfiniteScrollView: View {
             } message: {
                 Text("全ての名刺（\(totalCards)件）を削除しますか？この操作は取り消せません。")
             }
+//            .onAppear {
+//                // バックグラウンドで総数を取得
+//                loadBackgroundTotalCards()
+//            }
         }
     }
+    
+    // MARK: - バックグラウンド処理
+    
+//    /// バックグラウンドで総名刺数を取得
+//    private func loadBackgroundTotalCards() {
+//        // 方法1: Task.detachedを使用
+//        Task.detached { [modelContext] in
+//            do {
+//                let container = modelContext.container
+//                let context = ModelContext(container)
+//                let descriptor = FetchDescriptor<BusinessCard>()
+//                let cards = try context.fetch(descriptor)
+//                
+//                await MainActor.run {
+//                    backgroundTotalCards = cards.count
+//                }
+//                
+//                print("Task.detachedで取得した総名刺数: \(cards.count)")
+//            } catch {
+//                print("バックグラウンドでの取得エラー: \(error)")
+//            }
+//        }
+//        
+//        // 方法2: BusinessCardRepositoryを使用
+//        Task {
+//            do {
+//                let repository = BusinessCardRepository(modelContainer: modelContext.container)
+//                let count = try await repository.getTotalCardsCount()
+//                
+//                await MainActor.run {
+//                    // backgroundTotalCards = count // 上記のTask.detachedと重複するのでコメントアウト
+//                }
+//                
+//                print("BusinessCardRepositoryで取得した総名刺数: \(count)")
+//            } catch {
+//                print("BusinessCardRepositoryでの取得エラー: \(error)")
+//            }
+//        }
+//    }
 }
