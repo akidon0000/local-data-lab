@@ -12,9 +12,7 @@ import SwiftData
 struct localDB_sampleerApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Trip.self,
-            Accommodation.self,
-            BusinessCard.self,
+            ProfileCard.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -27,7 +25,7 @@ struct localDB_sampleerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            InfiniteScrollView()
+            ProfileCardView()
         }
         .modelContainer(sharedModelContainer)
     }
