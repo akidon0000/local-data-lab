@@ -9,6 +9,12 @@ import SwiftUI
 
 struct BusinessCardRow: View {
     let card: BusinessCard
+    let onDelete: ((BusinessCard) -> Void)?
+    
+    init(card: BusinessCard, onDelete: ((BusinessCard) -> Void)? = nil) {
+        self.card = card
+        self.onDelete = onDelete
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -37,6 +43,13 @@ struct BusinessCardRow: View {
             }
         }
         .padding(.vertical, 4)
+        .contextMenu {
+            if let onDelete = onDelete {
+                Button("削除", role: .destructive) {
+                    onDelete(card)
+                }
+            }
+        }
     }
 }
 

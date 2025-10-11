@@ -47,6 +47,102 @@ extension InfiniteScrollView {
         }
     }
     
+    // 全ての名刺を削除
+    func deleteAllBusinessCards() {
+        Task {
+            await deleteAllBusinessCardsAsync()
+        }
+    }
+    
+    @MainActor
+    private func deleteAllBusinessCardsAsync() async {
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            // バッチサイズで分割して削除
+            let batchSize = 100
+            let descriptor = FetchDescriptor<BusinessCard>()
+            
+            while true {
+                var limitedDescriptor = descriptor
+                limitedDescriptor.fetchLimit = batchSize
+                
+                let cardsToDelete = try modelContext.fetch(limitedDescriptor)
+                
+                if cardsToDelete.isEmpty {
+                    break
+                }
+                
+                for card in cardsToDelete {
+                    modelContext.delete(card)
+                }
+                
+                try modelContext.save()
+                
+                // UIの応答性を保つため少し待機
+                try await Task.sleep(nanoseconds: 10_000_000) // 0.01秒
+            }
+            
+            isLoading = false
+        } catch {
+            errorMessage = "名刺の削除に失敗しました: \(error.localizedDescription)"
+            isLoading = false
+        }
+    }
+    
+    // 指定件数の名刺を削除（最新から）
+    func deleteBusinessCards(count: Int) {
+        Task {
+            await deleteBusinessCardsAsync(count: count)
+        }
+    }
+    
+    @MainActor
+    private func deleteBusinessCardsAsync(count: Int) async {
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            let batchSize = 100
+            var remainingCount = count
+            
+            while remainingCount > 0 {
+                let currentBatchSize = min(batchSize, remainingCount)
+                
+                // 最新の名刺から削除
+                var descriptor = FetchDescriptor<BusinessCard>(
+                    sortBy: [SortDescriptor(\.name, order: .reverse)]
+                )
+                descriptor.fetchLimit = currentBatchSize
+                
+                let cardsToDelete = try modelContext.fetch(descriptor)
+                
+                if cardsToDelete.isEmpty {
+                    break
+                }
+                
+                for card in cardsToDelete {
+                    modelContext.delete(card)
+                }
+                
+                try modelContext.save()
+                
+                remainingCount -= cardsToDelete.count
+                
+                // UIの応答性を保つため少し待機
+                if remainingCount > 0 {
+                    try await Task.sleep(nanoseconds: 10_000_000) // 0.01秒
+                }
+            }
+            
+            isLoading = false
+        } catch {
+            errorMessage = "名刺の削除に失敗しました: \(error.localizedDescription)"
+            isLoading = false
+        }
+    }
+    
     // サンプルデータを生成
     func generateSampleData() {
         let sampleCards = [
@@ -80,9 +176,80 @@ extension InfiniteScrollView {
         }
     }
     
+    // 指定件数の名刺を一括追加
+    func addBusinessCards(count: Int) {
+        Task {
+            await addBusinessCardsAsync(count: count)
+        }
+    }
+    
+    @MainActor
+    private func addBusinessCardsAsync(count: Int) async {
+        isLoading = true
+        errorMessage = nil
+        
+        do {
+            let companies = getCompanies()
+            let positions = getPositions()
+            let firstNames = getFirstNames()
+            let lastNames = getLastNames()
+            
+            // バッチ処理でパフォーマンスを向上
+            let batchSize = 100
+            let batches = (count + batchSize - 1) / batchSize
+            
+            for batch in 0..<batches {
+                let startIndex = batch * batchSize
+                let endIndex = min(startIndex + batchSize, count)
+                let currentBatchSize = endIndex - startIndex
+                
+                // バックグラウンドでデータ生成
+                let newCards = await Task.detached {
+                    var cards: [BusinessCard] = []
+                    for _ in 0..<currentBatchSize {
+                        let lastName = lastNames.randomElement()!
+                        let firstName = firstNames.randomElement()!
+                        let company = companies.randomElement()!
+                        let position = positions.randomElement()!
+                        
+                        let newCard = BusinessCard(
+                            name: "\(lastName) \(firstName)",
+                            company: company,
+                            position: position
+                        )
+                        cards.append(newCard)
+                    }
+                    return cards
+                }.value
+                
+                // メインアクターでデータベースに保存
+                for card in newCards {
+                    modelContext.insert(card)
+                }
+                
+                try modelContext.save()
+                
+                // 少し待機してUIの応答性を保つ
+                if batch < batches - 1 {
+                    try await Task.sleep(nanoseconds: 10_000_000) // 0.01秒
+                }
+            }
+            
+            isLoading = false
+        } catch {
+            errorMessage = "名刺の保存に失敗しました: \(error.localizedDescription)"
+            isLoading = false
+        }
+    }
+    
     // 大量のサンプルデータを生成（無限スクロールのテスト用）
     func generateLargeSampleData() {
-        let companies = [
+        addBusinessCards(count: 500)
+    }
+    
+    // 会社名の配列を取得
+    private func getCompanies() -> [String] {
+        return [
             // IT・テクノロジー系
             "株式会社テクノロジー", "システム開発株式会社", "ソフトウェア株式会社", "IT株式会社", "デジタル株式会社",
             "株式会社イノベーション", "株式会社フューチャー", "株式会社アドバンス", "株式会社プログレス", "株式会社サクセス",
@@ -134,7 +301,11 @@ extension InfiniteScrollView {
             "倉庫株式会社", "保管株式会社", "ロジスティクス株式会社", "サプライチェーン株式会社", "流通株式会社",
             "航空株式会社", "海運株式会社", "陸運株式会社", "鉄道株式会社", "バス株式会社"
         ]
-        let positions = [
+    }
+    
+    // 役職の配列を取得
+    private func getPositions() -> [String] {
+        return [
             // 経営層
             "代表取締役", "取締役", "執行役員", "常務取締役", "専務取締役", "副社長", "社長", "会長", "CEO", "CTO",
             "CFO", "COO", "CIO", "CMO", "CHRO", "CDO", "CPO", "CSO", "CCO", "CRO",
@@ -183,7 +354,11 @@ extension InfiniteScrollView {
             "研究員", "開発", "企画", "編集", "ライター", "翻訳", "通訳", "講師",
             "医師", "看護師", "薬剤師", "理学療法士", "作業療法士", "栄養士", "介護士"
         ]
-        let firstNames = [
+    }
+    
+    // 名前の配列を取得
+    private func getFirstNames() -> [String] {
+        return [
             // 伝統的な男性名
             "太郎", "一郎", "健太", "大輔", "翔太", "裕太", "直樹", "雅人", "博之", "隆",
             "修", "浩", "誠", "剛", "学", "明", "勇", "進", "豊", "正",
@@ -226,7 +401,11 @@ extension InfiniteScrollView {
             "黒", "黒木", "黒田", "黒山", "黒海", "黒川", "黒野", "黒原", "黒石", "黒沢",
             "緑", "緑花", "緑葉", "緑山", "緑海", "緑木", "緑田", "緑野", "緑原", "緑川"
         ]
-        let lastNames = [
+    }
+    
+    // 苗字の配列を取得
+    private func getLastNames() -> [String] {
+        return [
             // 一般的な苗字（上位100位）
             "田中", "佐藤", "鈴木", "高橋", "山田", "渡辺", "伊藤", "中村", "小林", "加藤",
             "吉田", "山本", "松本", "井上", "木村", "林", "斎藤", "清水", "山崎", "森",
@@ -274,18 +453,5 @@ extension InfiniteScrollView {
             "花岡", "桜岡", "梅岡", "松岡", "竹岡", "杉岡", "柳岡", "桐岡", "楓岡", "椿岡",
             "青山", "赤山", "白山", "黒山", "緑山", "紫山", "黄山", "茶山", "灰山", "銀山"
         ]
-        
-        for _ in 1...500 {
-            let lastName = lastNames.randomElement()!
-            let firstName = firstNames.randomElement()!
-            let company = companies.randomElement()!
-            let position = positions.randomElement()!
-            
-            addBusinessCard(
-                name: "\(lastName) \(firstName)",
-                company: company,
-                position: position
-            )
-        }
     }
 }
