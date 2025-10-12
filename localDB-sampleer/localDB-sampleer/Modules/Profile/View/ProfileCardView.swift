@@ -10,7 +10,8 @@ import SwiftUI
 
 struct ProfileCardView: View {
     @Environment(\.modelContext) var modelContext
-    @Query(sort: \ProfileCard.name, order: .reverse) var profileCards: [ProfileCard]
+//    @Query(sort: \ProfileCard.name, order: .reverse) var profileCards: [ProfileCard]
+    @State var profileCards = [ProfileCard]()
     @State var errorMessage: String?
     @State var showDeleteAllAlert = false
     
@@ -22,13 +23,6 @@ struct ProfileCardView: View {
                     ForEach(profileCards, id: \.name) { card in
                         ProfileCardRow(card: card)
                     }
-                    .onDelete { indexSet in
-                        for index in indexSet {
-                            let cardToDelete = profileCards[index]
-                            modelContext.delete(cardToDelete)
-                            try? modelContext.save()
-                        }
-                    }
                 }
                 
                 if let errorMessage = errorMessage {
@@ -37,6 +31,9 @@ struct ProfileCardView: View {
                         .padding()
                         .background(Color(.systemRed).opacity(0.1))
                 }
+            }
+            .onAppear {
+                ProfileCardRepository.createSharedInstance(modelContext: modelContext)
             }
             .navigationTitle("名刺一覧 総名刺数: (\(profileCards.count))枚")
             .navigationBarTitleDisplayMode(.inline)
@@ -59,6 +56,15 @@ struct ProfileCardView: View {
                         } label: {
                             Image(systemName: "plus")
                         }
+                        Button("更新", role: .destructive) {
+                            Task {
+                                let repo = ProfileCardRepository.shared!
+                                let cards = await repo.getAll()
+                                await MainActor.run {
+                                    profileCards = cards ?? [ProfileCard(name: "aa")]
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -74,7 +80,7 @@ struct ProfileCardView: View {
     }
     
     func generateData(count: Int) {
-        let repository = ProfileCardRepository(modelContainer: modelContext.container)
+        let repository = ProfileCardRepository.shared!
         Task.detached {
                 var list = [ProfileCard]()
                 for i in 1...count {
@@ -96,7 +102,7 @@ struct ProfileCardView: View {
     }
     
     func deleteAllData() {
-        let repository = ProfileCardRepository(modelContainer: modelContext.container)
+        let repository = ProfileCardRepository.shared!
         Task.detached {
             do {
                 try await repository.deleteAll()

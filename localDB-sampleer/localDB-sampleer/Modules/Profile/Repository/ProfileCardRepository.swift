@@ -5,17 +5,15 @@
 //  Created by Akihiro Matsuyama on 2025/10/11.
 //
 
-//protocol ProfileCardRepository {
-//    func fetchAllCards() -> [ProfileCard]
-//    func addCard(_ card: ProfileCard)
-//}
-//
-
 import SwiftData
 
 @ModelActor
 actor ProfileCardRepository {
     private(set) static var shared: ProfileCardRepository!
+    
+    static func createSharedInstance(modelContext: ModelContext) {
+        shared = ProfileCardRepository(modelContainer: modelContext.container)
+    }
     
     public func getAll() -> [ProfileCard]? {
         try? modelContext.fetch(FetchDescriptor<ProfileCard>())
