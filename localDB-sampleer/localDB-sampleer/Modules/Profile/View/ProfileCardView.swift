@@ -74,17 +74,16 @@ struct ProfileCardView: View {
     }
     
     func generateData(count: Int) {
+        let repository = ProfileCardRepository(modelContainer: modelContext.container)
         Task.detached {
-            do {
-                let repository = await ProfileCardRepository(modelContainer: modelContext.container)
                 var list = [ProfileCard]()
                 for i in 1...count {
                     let instance = ProfileCard(name: "User \(i)")
                     list.append(instance)
                 }
                 
+            do {
                 try await repository.create(todo: list)
-                
                 await MainActor.run {
                     errorMessage = nil
                 }
@@ -97,9 +96,9 @@ struct ProfileCardView: View {
     }
     
     func deleteAllData() {
+        let repository = ProfileCardRepository(modelContainer: modelContext.container)
         Task.detached {
             do {
-                let repository = await ProfileCardRepository(modelContainer: modelContext.container)
                 try await repository.deleteAll()
                 
                 await MainActor.run {
