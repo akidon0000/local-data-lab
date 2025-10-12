@@ -74,11 +74,43 @@ struct ProfileCardView: View {
     }
     
     func generateData(count: Int) {
-        ProfileCard.generateData(modelContext: modelContext, count: count)
+        Task.detached {
+            do {
+                let repository = await ProfileCardRepository(modelContainer: modelContext.container)
+                var list = [ProfileCard]()
+                for i in 1...count {
+                    let instance = ProfileCard(name: "User \(i)")
+                    list.append(instance)
+                }
+                
+                try await repository.create(todo: list)
+                
+                await MainActor.run {
+                    errorMessage = nil
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "データの生成に失敗しました: \(error.localizedDescription)"
+                }
+            }
+        }
     }
     
     func deleteAllData() {
-        ProfileCard.deleteAllData(modelContext: modelContext)
+        Task.detached {
+            do {
+                let repository = await ProfileCardRepository(modelContainer: modelContext.container)
+                try await repository.deleteAll()
+                
+                await MainActor.run {
+                    errorMessage = nil
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "データの削除に失敗しました: \(error.localizedDescription)"
+                }
+            }
+        }
     }
 }
 

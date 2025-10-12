@@ -50,3 +50,6 @@ import SwiftData
     }
 }
 
+//extension ProfileCard {
+//    static let container = try! ModelContainer(for: ProfileCard.self)
+//}
