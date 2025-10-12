@@ -17,6 +17,16 @@ import SwiftData
         self.createdAt = createdAt
     }
     
+    static func predicate(
+        name: String
+    ) -> Predicate<ProfileCard> {  // 以下省略
+        
+        return #Predicate<ProfileCard> { profileCard in
+            profileCard.name == name
+        }
+        
+    }
+    
     static func generateData(modelContext: ModelContext, count: Int = 1) {
         for i in 1...count {
             let instance = ProfileCard(name: "User \(i)")
