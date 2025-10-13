@@ -8,126 +8,74 @@
 import SwiftData
 import SwiftUI
 
-struct ProfileModel {
-    let name: Date
-}
-
 struct ProfileCardView: View {
-    @Environment(\.modelContext) var modelContext
-//    @Query(sort: \ProfileCard.name, order: .reverse) var profileCards: [ProfileCard]
-//    @State var profileCards = [ProfileCard]()
-    
-//    static let profileCardsFilter = #Predicate<ProfileModel> { item in
-//        return item.name == "User 145"
-//    }
-//    init(
-//        searchText: String = ""
-//    ) {
-//        _profileCards = Query(
-//            filter: ProfileCard.predicate(name: "User 145"),
-//            sort: \ProfileCard.name,
-//            order: .reverse
-//        )
-//    }
-//    static func profileCardsFilter(
-//        searchText: String,
-//        searchDate: Date
-//    ) -> Predicate<ProfileModel> {
-        // 絞り込みを行う部分
-//        let predicate = ProfileModel.predicate(name: String)
-//        _profileCards = Query(filter: predicate, sort: \.name, order: .reverse)
-//        let calendar = Calendar.autoupdatingCurrent
-//        let start = calendar.startOfDay(for: searchDate)
-//        let end = calendar.date(byAdding: .init(day: 1), to: start) ?? start
-//
-//
-//        return #Predicate<Quake> { quake in
-//            (searchText.isEmpty || quake.location.name.contains(searchText))
-//            &&
-//            (quake.time > start && quake.time < end)
-//        }
-//    }
-    
-    
-    @State private var cursorDate: Date? = nil
+    @Environment(\.modelContext) var modelContext    
     @State private var displayedCards: [ProfileCard] = []
-    @State private var isLoading = false
-    @State private var allDataLoaded = false
-    private static let pageSize = 50
-    
     
     @State var errorMessage: String?
     @State var showDeleteAllAlert = false
     @State var limit: Int = 50
     @State private var offset: Int = 0
+    @State private var currentIndexKey: String? = nil
+    @State private var cursorDate: Date? = nil
+    @State private var isLoading = false
+    @State private var allDataLoaded = false
+    private static let pageSize = 50
     
-    private func loadInitial() {
-        guard !isLoading else { return }
-        isLoading = true
-        displayedCards.removeAll()
-        allDataLoaded = false
-        offset = 0
-        var descriptor = FetchDescriptor<ProfileCard>(
-            predicate: ProfileCard.predicate(name: "User 145"),
-            sortBy: [SortDescriptor(\ProfileCard.name, order: .forward)]
-        )
-        descriptor.fetchLimit = limit
-        descriptor.fetchOffset = offset
-        Task {
-            let page = (try? modelContext.fetch(descriptor)) ?? []
-            await MainActor.run {
-                displayedCards = page
-                offset += page.count
-                allDataLoaded = page.count < limit
-                isLoading = false
-            }
+    // セクション化（五十音の行ごと）
+    private var sectionedCards: [String: [ProfileCard]] {
+        let grouped = Dictionary(grouping: displayedCards) { (card: ProfileCard) in
+            guard let first = card.name.first else { return "#" }
+            return gojuonRow(for: first)
         }
+        var sortedGrouped: [String: [ProfileCard]] = [:]
+        for (key, values) in grouped {
+            sortedGrouped[key] = values.sorted { $0.name < $1.name }
+        }
+        return sortedGrouped
     }
     
-    private func loadMore() {
-        guard !isLoading, !allDataLoaded else { return }
-        isLoading = true
-        var descriptor = FetchDescriptor<ProfileCard>(
-            predicate: ProfileCard.predicate(name: "User 145"),
-            sortBy: [SortDescriptor(\ProfileCard.name, order: .forward)]
-        )
-        descriptor.fetchLimit = limit
-        descriptor.fetchOffset = offset
-        Task {
-            let next = (try? modelContext.fetch(descriptor)) ?? []
-            await MainActor.run {
-                if next.isEmpty {
-                    allDataLoaded = true
-                } else {
-                    let existing = Set(displayedCards.map { $0.name })
-                    let toAppend = next.filter { !existing.contains($0.name) }
-                    displayedCards.append(contentsOf: toAppend)
-                    offset += next.count
-                }
-                isLoading = false
-            }
-        }
+    private var sortedSectionKeys: [String] {
+        ["あ","か","さ","た","な","は","ま","や","ら","わ"]
+    }
+    
+    // 実データに存在するセクションのみをインデックス表示
+    private var availableSectionKeys: [String] {
+        let existing = Set(displayedCards.compactMap { $0.name.first.map { gojuonRow(for: $0) } })
+        return sortedSectionKeys.filter { existing.contains($0) }
     }
     
     var body: some View {
         NavigationView {
             ZStack {
-                
-                
-                // 名刺リスト
-                List {
-                    ForEach(displayedCards, id: \.name) { card in
-                        ProfileCardRow(card: card)
-                    }
-                    if !allDataLoaded {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                                .onAppear {
-                                    loadMore()
-                                }
-                            Spacer()
+                ScrollViewReader { proxy in
+                    List {
+                        let sorted = displayedCards.sorted { $0.name < $1.name }
+                        ForEach(Array(sorted.enumerated()), id: \.element.name) { idx, card in
+                            let currentKey = card.name.first.map { gojuonRow(for: $0) } ?? ""
+                            let prevKey = idx > 0 ? (sorted[idx - 1].name.first.map { gojuonRow(for: $0) } ?? "") : ""
+                            let isAnchor = !currentKey.isEmpty && (idx == 0 || currentKey != prevKey)
+                            ProfileCardRow(card: card)
+                                .id(isAnchor ? currentKey : card.name)
                         }
+                        if !allDataLoaded {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                    .onAppear {
+                                        loadMore()
+                                    }
+                                Spacer()
+                            }
+                        }
+                    }
+                    .overlay(alignment: .trailing) {
+                        IndexBar(keys: availableSectionKeys, currentKey: $currentIndexKey) { key in
+                            withAnimation(.easeInOut) {
+                                proxy.scrollTo(key, anchor: .top)
+                            }
+                        }
+                        .padding(.trailing, 4)
                     }
                 }
                 
@@ -180,15 +128,63 @@ struct ProfileCardView: View {
         }
     }
     
+    private func loadInitial() {
+        guard !isLoading else { return }
+        isLoading = true
+        displayedCards.removeAll()
+        allDataLoaded = false
+        offset = 0
+        var descriptor = FetchDescriptor<ProfileCard>(
+            predicate: ProfileCard.predicate(name: "User 145"),
+            sortBy: [SortDescriptor(\ProfileCard.name, order: .forward)]
+        )
+        descriptor.fetchLimit = limit
+        descriptor.fetchOffset = offset
+        Task {
+            let page = (try? modelContext.fetch(descriptor)) ?? []
+            await MainActor.run {
+                displayedCards = page
+                offset += page.count
+                allDataLoaded = page.count < limit
+                isLoading = false
+            }
+        }
+    }
+    
+    private func loadMore() {
+        guard !isLoading, !allDataLoaded else { return }
+        isLoading = true
+        var descriptor = FetchDescriptor<ProfileCard>(
+            predicate: ProfileCard.predicate(name: "User 145"),
+            sortBy: [SortDescriptor(\ProfileCard.name, order: .forward)]
+        )
+        descriptor.fetchLimit = limit
+        descriptor.fetchOffset = offset
+        Task {
+            let next = (try? modelContext.fetch(descriptor)) ?? []
+            await MainActor.run {
+                if next.isEmpty {
+                    allDataLoaded = true
+                } else {
+                    let existing = Set(displayedCards.map { $0.name })
+                    let toAppend = next.filter { !existing.contains($0.name) }
+                    displayedCards.append(contentsOf: toAppend)
+                    offset += next.count
+                }
+                isLoading = false
+            }
+        }
+    }
+    
     func generateData(count: Int) {
         let repository = ProfileCardRepository.shared!
         Task.detached {
-                var list = [ProfileCard]()
-                for i in 1...count {
-                    let instance = ProfileCard(name: "User \(i)")
-                    list.append(instance)
-                }
-                
+            var list = [ProfileCard]()
+            for i in 1...count {
+                let instance = ProfileCard(name: makeHiraganaName(i))
+                list.append(instance)
+            }
+            
             do {
                 try await repository.create(todo: list)
                 await MainActor.run {
@@ -203,6 +199,34 @@ struct ProfileCardView: View {
                     errorMessage = "データの生成に失敗しました: \(error.localizedDescription)"
                 }
             }
+        }
+    }
+    
+    private func makeHiraganaName(_ index: Int) -> String {
+        let chars: [Character] = Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん")
+        let length = 3 + (index % 3) // 3〜5文字
+        var result = String()
+        var seed = index
+        for i in 0..<length {
+            let pos = (seed + i * 7) % chars.count
+            result.append(chars[pos])
+        }
+        return result
+    }
+    
+    private func gojuonRow(for firstChar: Character) -> String {
+        switch firstChar {
+        case "あ","い","う","え","お": return "あ"
+        case "か","き","く","け","こ": return "か"
+        case "さ","し","す","せ","そ": return "さ"
+        case "た","ち","つ","て","と": return "た"
+        case "な","に","ぬ","ね","の": return "な"
+        case "は","ひ","ふ","へ","ほ": return "は"
+        case "ま","み","む","め","も": return "ま"
+        case "や","ゆ","よ": return "や"
+        case "ら","り","る","れ","ろ": return "ら"
+        case "わ","を","ん": return "わ"
+        default: return ""
         }
     }
     
@@ -225,6 +249,65 @@ struct ProfileCardView: View {
                 }
             }
         }
+    }
+}
+
+// 右端インデックスバー
+private struct IndexBar: View {
+    let keys: [String]
+    @Binding var currentKey: String?
+    var onSelect: (String) -> Void
+    @State private var contentHeight: CGFloat = 1
+    
+    var body: some View {
+        VStack(spacing: 2) {
+            ForEach(keys, id: \.self) { key in
+                Text(key)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 20, height: 14)
+            }
+        }
+        .padding(.vertical, 6)
+        .frame(width: 28)
+        .background(.ultraThinMaterial, in: Capsule())
+        .background(
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear { contentHeight = max(1, proxy.size.height) }
+                    .onChange(of: proxy.size.height) { newValue in
+                        contentHeight = max(1, newValue)
+                    }
+            }
+        )
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    guard !keys.isEmpty else { return }
+                    let locationY = max(0, min(contentHeight, value.location.y))
+                    let idxFloat = (locationY / contentHeight) * CGFloat(max(1, keys.count))
+                    let index = Int(idxFloat)
+                    let clamped = max(0, min(keys.count - 1, index))
+                    let key = keys[clamped]
+                    if currentKey != key {
+                        currentKey = key
+                        onSelect(key)
+                    }
+                }
+                .onEnded { value in
+                    guard !keys.isEmpty else { return }
+                    let locationY = max(0, min(contentHeight, value.location.y))
+                    let idxFloat = (locationY / contentHeight) * CGFloat(max(1, keys.count))
+                    let index = Int(idxFloat)
+                    let clamped = max(0, min(keys.count - 1, index))
+                    let key = keys[clamped]
+                    if currentKey != key {
+                        currentKey = key
+                    }
+                    onSelect(key)
+                }
+        )
     }
 }
 

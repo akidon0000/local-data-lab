@@ -29,7 +29,7 @@ import SwiftData
     
     static func generateData(modelContext: ModelContext, count: Int = 1) {
         for i in 1...count {
-            let instance = ProfileCard(name: "User \(i)")
+            let instance = ProfileCard(name: Self.makeHiraganaName(i))
             modelContext.insert(instance)
         }
         
@@ -38,6 +38,18 @@ import SwiftData
         } catch {
             print("データの保存に失敗しました: \(error)")
         }
+    }
+
+    private static func makeHiraganaName(_ index: Int) -> String {
+        let chars: [Character] = Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん")
+        let length = 3 + (index % 3)
+        var result = String()
+        var seed = index
+        for i in 0..<length {
+            let pos = (seed + i * 7) % chars.count
+            result.append(chars[pos])
+        }
+        return result
     }
     
     static func deleteAllData(modelContext: ModelContext) {
