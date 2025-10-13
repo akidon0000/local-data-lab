@@ -39,6 +39,11 @@ struct ProfileCardView: View {
         ["あ","か","さ","た","な","は","ま","や","ら","わ"]
     }
     
+    // サイドバー表示用（あ〜んのフルかな）
+    private var kanaIndexKeys: [String] {
+        Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん").map { String($0) }
+    }
+    
     // 実データに存在するセクションのみをインデックス表示
     private var availableSectionKeys: [String] {
         let existing = Set(displayedCards.compactMap { $0.name.first.map { gojuonRow(for: $0) } })
@@ -70,9 +75,10 @@ struct ProfileCardView: View {
                         }
                     }
                     .overlay(alignment: .trailing) {
-                        IndexBar(keys: availableSectionKeys, currentKey: $currentIndexKey) { key in
+                        IndexBar(keys: kanaIndexKeys, currentKey: $currentIndexKey) { key in
                             withAnimation(.easeInOut) {
-                                proxy.scrollTo(key, anchor: .top)
+                                let anchorKey = gojuonRow(for: key.first ?? "あ")
+                                proxy.scrollTo(anchorKey, anchor: .top)
                             }
                         }
                         .padding(.trailing, 4)
