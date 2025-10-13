@@ -17,61 +17,13 @@ import SwiftData
         self.createdAt = createdAt
     }
     
-    static func predicate(
-        name: String
-    ) -> Predicate<ProfileCard> {  // 以下省略
-        
-        return #Predicate<ProfileCard> { profileCard in
-            true
-        }
-        
-    }
-    
-    static func generateData(modelContext: ModelContext, count: Int = 1) {
-        for i in 1...count {
-            let instance = ProfileCard(name: Self.makeHiraganaName(i))
-            modelContext.insert(instance)
-        }
-        
-        do {
-            try modelContext.save()
-        } catch {
-            print("データの保存に失敗しました: \(error)")
-        }
-    }
-
-    private static func makeHiraganaName(_ index: Int) -> String {
-        let chars: [Character] = Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん")
-        let length = 3 + (index % 3)
-        var result = String()
-        var seed = index
-        for i in 0..<length {
-            let pos = (seed + i * 7) % chars.count
-            result.append(chars[pos])
-        }
-        return result
-    }
-    
-    static func deleteAllData(modelContext: ModelContext) {
-        do {
-            // 全てのProfileCardを取得
-            let fetchDescriptor = FetchDescriptor<ProfileCard>()
-            let allCards = try modelContext.fetch(fetchDescriptor)
-            
-            // 全てのカードを削除
-            for card in allCards {
-                modelContext.delete(card)
+    static func predicate(name: String) -> Predicate<ProfileCard> {
+        return #Predicate<ProfileCard> { card in
+            if name == "" {
+                return true
+            } else {
+                return card.name.contains(name)
             }
-            
-            // 変更を保存
-            try modelContext.save()
-            print("全ての名刺データを削除しました（\(allCards.count)件）")
-        } catch {
-            print("データの削除に失敗しました: \(error)")
         }
     }
 }
-
-//extension ProfileCard {
-//    static let container = try! ModelContainer(for: ProfileCard.self)
-//}
