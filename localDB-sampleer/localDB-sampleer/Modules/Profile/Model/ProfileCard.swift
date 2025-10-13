@@ -22,7 +22,7 @@ import SwiftData
     ) -> Predicate<ProfileCard> {  // 以下省略
         
         return #Predicate<ProfileCard> { profileCard in
-            profileCard.name == name
+            true
         }
         
     }

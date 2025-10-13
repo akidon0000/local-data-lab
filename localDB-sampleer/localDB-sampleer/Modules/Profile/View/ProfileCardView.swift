@@ -15,21 +15,20 @@ struct ProfileModel {
 struct ProfileCardView: View {
     @Environment(\.modelContext) var modelContext
 //    @Query(sort: \ProfileCard.name, order: .reverse) var profileCards: [ProfileCard]
-    @Query private var profileCards: [ProfileCard]
 //    @State var profileCards = [ProfileCard]()
     
 //    static let profileCardsFilter = #Predicate<ProfileModel> { item in
 //        return item.name == "User 145"
 //    }
-    init(
-        searchText: String = ""
-    ) {
-        _profileCards = Query(
-            filter: ProfileCard.predicate(name: "User 145"),
-            sort: \ProfileCard.name,
-            order: .reverse
-        )
-    }
+//    init(
+//        searchText: String = ""
+//    ) {
+//        _profileCards = Query(
+//            filter: ProfileCard.predicate(name: "User 145"),
+//            sort: \ProfileCard.name,
+//            order: .reverse
+//        )
+//    }
 //    static func profileCardsFilter(
 //        searchText: String,
 //        searchDate: Date
@@ -59,27 +58,68 @@ struct ProfileCardView: View {
     
     @State var errorMessage: String?
     @State var showDeleteAllAlert = false
+    @State var limit: Int = 50
+    @State private var offset: Int = 0
+    
+    private func loadInitial() {
+        guard !isLoading else { return }
+        isLoading = true
+        displayedCards.removeAll()
+        allDataLoaded = false
+        offset = 0
+        var descriptor = FetchDescriptor<ProfileCard>(
+            predicate: ProfileCard.predicate(name: "User 145"),
+            sortBy: [SortDescriptor(\ProfileCard.name, order: .forward)]
+        )
+        descriptor.fetchLimit = limit
+        descriptor.fetchOffset = offset
+        Task {
+            let page = (try? modelContext.fetch(descriptor)) ?? []
+            await MainActor.run {
+                displayedCards = page
+                offset += page.count
+                allDataLoaded = page.count < limit
+                isLoading = false
+            }
+        }
+    }
     
     private func loadMore() {
         guard !isLoading, !allDataLoaded else { return }
         isLoading = true
-        if let last = displayedCards.last {
-            cursorDate = last.createdAt
-        } else {
-            allDataLoaded = true
-            isLoading = false
+        var descriptor = FetchDescriptor<ProfileCard>(
+            predicate: ProfileCard.predicate(name: "User 145"),
+            sortBy: [SortDescriptor(\ProfileCard.name, order: .forward)]
+        )
+        descriptor.fetchLimit = limit
+        descriptor.fetchOffset = offset
+        Task {
+            let next = (try? modelContext.fetch(descriptor)) ?? []
+            await MainActor.run {
+                if next.isEmpty {
+                    allDataLoaded = true
+                } else {
+                    let existing = Set(displayedCards.map { $0.name })
+                    let toAppend = next.filter { !existing.contains($0.name) }
+                    displayedCards.append(contentsOf: toAppend)
+                    offset += next.count
+                }
+                isLoading = false
+            }
         }
     }
     
     var body: some View {
         NavigationView {
             ZStack {
+                
+                
                 // 名刺リスト
                 List {
                     ForEach(displayedCards, id: \.name) { card in
                         ProfileCardRow(card: card)
                     }
-                    if !allDataLoaded && !profileCards.isEmpty {
+                    if !allDataLoaded {
                         HStack {
                             Spacer()
                             ProgressView()
@@ -100,21 +140,7 @@ struct ProfileCardView: View {
             }
             .onAppear {
                 ProfileCardRepository.createSharedInstance(modelContext: modelContext)
-                displayedCards = profileCards
-            }
-            .onChange(of: profileCards) { _, newValue in
-                if displayedCards.isEmpty {
-                    displayedCards = newValue
-                } else if isLoading {
-                    if newValue.isEmpty {
-                        allDataLoaded = true
-                    } else {
-                        let existing = Set(displayedCards.map { $0.name })
-                        let toAppend = newValue.filter { !existing.contains($0.name) }
-                        displayedCards.append(contentsOf: toAppend)
-                    }
-                    isLoading = false
-                }
+                loadInitial()
             }
             .navigationTitle("名刺一覧 表示中: (\(displayedCards.count))件")
             .navigationBarTitleDisplayMode(.inline)
@@ -138,13 +164,7 @@ struct ProfileCardView: View {
                             Image(systemName: "plus")
                         }
                         Button("更新", role: .destructive) {
-                            Task {
-                                let repo = ProfileCardRepository.shared!
-                                let cards = await repo.getAll()
-                                await MainActor.run {
-//                                    profileCards = cards ?? [ProfileCard(name: "aa")]
-                                }
-                            }
+                            loadInitial()
                         }
                     }
                 }

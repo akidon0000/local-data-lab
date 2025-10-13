@@ -24,6 +24,7 @@ actor ProfileCardRepository {
         try? modelContext.save()
     }
     
+    
     public func deleteAll() throws {
         try modelContext.delete(model: ProfileCard.self)
     }
