@@ -20,7 +20,14 @@ struct ProfileCardView: View {
     @State private var cursorDate: Date? = nil
     @State private var isLoading = false
     @State private var allDataLoaded = false
+    @State private var lowerBoundName: String? = nil
+    @State private var pendingScrollKeyForIndex: String? = nil
+    @State private var isLoadingPrevious = false
+    @State private var ignoreInitialTopSentinel = true
+    @State private var stickToIdAfterPrepend: String? = nil
+    @State private var pendingRestoreAfterPrepend = false
     private static let pageSize = 50
+    private let prefetchPreviousLimit = 12
     
     // セクション化（五十音の行ごと）
     private var sectionedCards: [String: [ProfileCard]] {
@@ -55,13 +62,28 @@ struct ProfileCardView: View {
             ZStack {
                 ScrollViewReader { proxy in
                     List {
+                        // 上方向ページング用のトップ・センチネル
+                        Color.clear
+                            .frame(height: 1)
+                            .id("top-sentinel")
+                            .onAppear {
+                                handleTopSentinelAppear()
+                            }
+
                         let sorted = displayedCards.sorted { $0.name < $1.name }
                         ForEach(Array(sorted.enumerated()), id: \.element.name) { idx, card in
                             let currentKey = card.name.first.map { gojuonRow(for: $0) } ?? ""
                             let prevKey = idx > 0 ? (sorted[idx - 1].name.first.map { gojuonRow(for: $0) } ?? "") : ""
                             let isAnchor = !currentKey.isEmpty && (idx == 0 || currentKey != prevKey)
-                            ProfileCardRow(card: card)
-                                .id(isAnchor ? currentKey : card.name)
+                            Group {
+                                if isAnchor {
+                                    Color.clear
+                                        .frame(height: 0.1)
+                                        .id(currentKey)
+                                }
+                                ProfileCardRow(card: card)
+                                    .id(card.name)
+                            }
                         }
                         if !allDataLoaded {
                             HStack {
@@ -74,11 +96,52 @@ struct ProfileCardView: View {
                             }
                         }
                     }
+                    .onChange(of: displayedCards) { _ in
+                    // 1) 上方向プリペンド後の位置復元（アニメーション無し）
+                        if pendingRestoreAfterPrepend, let id = stickToIdAfterPrepend {
+                            // 次のフレームでレイアウトが安定してから、追加分の最下部へスムーズに移動
+                            DispatchQueue.main.async {
+                            withTransaction(Transaction(animation: nil)) {
+                                proxy.scrollTo(id, anchor: .top)
+                            }
+                                pendingRestoreAfterPrepend = false
+                                stickToIdAfterPrepend = nil
+                            }
+                            return
+                        }
+
+                        // 2) インデックスジャンプ後のアンカーへスクロール
+                        guard let key = pendingScrollKeyForIndex else { return }
+                        let exists = displayedCards.contains { card in
+                            guard let first = card.name.first else { return false }
+                            return gojuonRow(for: first) == key
+                        }
+                        if exists {
+                            withAnimation(.easeInOut) {
+                                proxy.scrollTo(key, anchor: .top)
+                            }
+                            pendingScrollKeyForIndex = nil
+                            // アンカー表示が完了したら、直前の行を少量だけプレビュー読み込み
+                            preloadPreviousForAnchor(key)
+                        }
+                    }
                     .overlay(alignment: .trailing) {
                         IndexBar(keys: kanaIndexKeys, currentKey: $currentIndexKey) { key in
-                            withAnimation(.easeInOut) {
-                                let anchorKey = gojuonRow(for: key.first ?? "あ")
-                                proxy.scrollTo(anchorKey, anchor: .top)
+                            let anchorKey = gojuonRow(for: key.first ?? "あ")
+                            let exists = displayedCards.contains { card in
+                                guard let first = card.name.first else { return false }
+                                return gojuonRow(for: first) == anchorKey
+                            }
+                            if exists {
+                                withAnimation(.easeInOut) {
+                                    proxy.scrollTo(anchorKey, anchor: .top)
+                                }
+                                // 既に存在している場合でも前方プレビューを補う
+                                preloadPreviousForAnchor(anchorKey)
+                            } else {
+                                lowerBoundName = anchorKey
+                                pendingScrollKeyForIndex = anchorKey
+                                loadInitial()
                             }
                         }
                         .padding(.trailing, 4)
@@ -141,9 +204,11 @@ struct ProfileCardView: View {
         allDataLoaded = false
         offset = 0
         var descriptor = FetchDescriptor<ProfileCard>(
-            predicate: ProfileCard.predicate(name: "User 145"),
             sortBy: [SortDescriptor(\ProfileCard.name, order: .forward)]
         )
+        if let bound = lowerBoundName {
+            descriptor.predicate = #Predicate<ProfileCard> { $0.name >= bound }
+        }
         descriptor.fetchLimit = limit
         descriptor.fetchOffset = offset
         Task {
@@ -161,9 +226,11 @@ struct ProfileCardView: View {
         guard !isLoading, !allDataLoaded else { return }
         isLoading = true
         var descriptor = FetchDescriptor<ProfileCard>(
-            predicate: ProfileCard.predicate(name: "User 145"),
             sortBy: [SortDescriptor(\ProfileCard.name, order: .forward)]
         )
+        if let bound = lowerBoundName {
+            descriptor.predicate = #Predicate<ProfileCard> { $0.name >= bound }
+        }
         descriptor.fetchLimit = limit
         descriptor.fetchOffset = offset
         Task {
@@ -233,6 +300,84 @@ struct ProfileCardView: View {
         case "ら","り","る","れ","ろ": return "ら"
         case "わ","を","ん": return "わ"
         default: return ""
+        }
+    }
+    
+    private func previousRowKey(for row: String) -> String? {
+        guard let idx = sortedSectionKeys.firstIndex(of: row), idx > 0 else { return nil }
+        return sortedSectionKeys[idx - 1]
+    }
+    
+    // アンカー行より少し前（直前の行の末尾側）を少量だけ読み込む
+    private func preloadPreviousForAnchor(_ anchorKey: String) {
+        guard let prevKey = previousRowKey(for: anchorKey) else { return }
+        var descriptor = FetchDescriptor<ProfileCard>(
+            sortBy: [SortDescriptor(\ProfileCard.name, order: .reverse)]
+        )
+        let lower = prevKey
+        let upper = anchorKey
+        descriptor.predicate = #Predicate<ProfileCard> { card in
+            card.name < upper && card.name >= lower
+        }
+        descriptor.fetchLimit = prefetchPreviousLimit
+        descriptor.fetchOffset = 0
+        Task {
+            let fetched = (try? modelContext.fetch(descriptor)) ?? []
+            await MainActor.run {
+                let existing = Set(displayedCards.map { $0.name })
+                let toAppend = fetched.filter { card in
+                    guard let first = card.name.first else { return false }
+                    return gojuonRow(for: first) == prevKey && !existing.contains(card.name)
+                }
+                if !toAppend.isEmpty {
+                    displayedCards.append(contentsOf: toAppend)
+                }
+            }
+        }
+    }
+
+    private func handleTopSentinelAppear() {
+        if ignoreInitialTopSentinel {
+            // 初期表示直後の発火は無視（List生成時に呼ばれるため）
+            ignoreInitialTopSentinel = false
+            return
+        }
+        loadPrevious()
+    }
+
+    private func loadPrevious() {
+        guard !isLoadingPrevious else { return }
+        let sorted = displayedCards.sorted(by: { $0.name < $1.name })
+        guard let first = sorted.first else { return }
+        guard let firstKey = first.name.first.map({ gojuonRow(for: $0) }) else { return }
+        guard let prevKey = previousRowKey(for: firstKey) else { return }
+        isLoadingPrevious = true
+
+        var descriptor = FetchDescriptor<ProfileCard>(
+            sortBy: [SortDescriptor(\ProfileCard.name, order: .reverse)]
+        )
+        let lower = prevKey
+        let upper = firstKey
+        descriptor.predicate = #Predicate<ProfileCard> { card in
+            card.name < upper && card.name >= lower
+        }
+        descriptor.fetchLimit = Self.pageSize
+        descriptor.fetchOffset = 0
+
+        Task {
+            let fetchedDesc = (try? modelContext.fetch(descriptor)) ?? []
+            let fetched = fetchedDesc.sorted { $0.name < $1.name }
+            await MainActor.run {
+                let existing = Set(displayedCards.map { $0.name })
+                let toInsert = fetched.filter { !existing.contains($0.name) }
+                if !toInsert.isEmpty {
+                    // プリペンド前に画面先頭に見えていた要素を復元アンカーとして保存
+                    stickToIdAfterPrepend = first.name
+                    pendingRestoreAfterPrepend = true
+                    displayedCards.insert(contentsOf: toInsert, at: 0)
+                }
+                isLoadingPrevious = false
+            }
         }
     }
     
