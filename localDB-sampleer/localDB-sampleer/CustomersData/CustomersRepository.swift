@@ -1,5 +1,5 @@
 //
-//  ProfileCardRepository.swift
+//  CustomersRepository.swift
 //  localDB-sampleer
 //
 //  Created by Akihiro Matsuyama on 2025/10/11.
@@ -9,34 +9,34 @@ import SwiftData
 import Foundation
 
 @ModelActor
-actor ProfileCardRepository {
-    private(set) static var shared: ProfileCardRepository!
+actor CustomersRepository {
+    private(set) static var shared: CustomersRepository!
     
     static func createSharedInstance(modelContext: ModelContext) {
-        shared = ProfileCardRepository(modelContainer: modelContext.container)
+        shared = CustomersRepository(modelContainer: modelContext.container)
     }
     
-    public func fetch(offset: Int = 0, limit: Int = 50, upper: String? = nil, lower: String? = nil) -> [ProfileCard] {
+    public func fetch(offset: Int = 0, limit: Int = 50, upper: String? = nil, lower: String? = nil) -> [Customers] {
         
-        var descriptor = FetchDescriptor<ProfileCard>(
-            sortBy: [SortDescriptor(\ProfileCard.name, order: .forward)]
+        var descriptor = FetchDescriptor<Customers>(
+            sortBy: [SortDescriptor(\Customers.name, order: .forward)]
         )
         descriptor.fetchOffset = offset // 先頭から {offset} 件をスキップ
         descriptor.fetchLimit = limit // 最大 {limit} 件まで取得
         if let upper = upper, let lower = lower{
-            descriptor.predicate = #Predicate<ProfileCard> { card in
+            descriptor.predicate = #Predicate<Customers> { card in
                 card.name < upper && card.name >= lower
             }
         }else if let lower = lower {
             // name が bound 以上のデータを取得する
-            descriptor.predicate = #Predicate<ProfileCard> { $0.name >= lower }
+            descriptor.predicate = #Predicate<Customers> { $0.name >= lower }
         }
         let lists = try? modelContext.fetch(descriptor)
         return lists ?? []
     }
     
-    public func getAll() -> [ProfileCard]? {
-        try? modelContext.fetch(FetchDescriptor<ProfileCard>())
+    public func getAll() -> [Customers]? {
+        try? modelContext.fetch(FetchDescriptor<Customers>())
     }
     
     public func create<T: PersistentModel>(todo: [T]) throws {
@@ -44,9 +44,14 @@ actor ProfileCardRepository {
         try? modelContext.save()
     }
     
+    public func insert(items: [Customers]) throws {
+        _ = items.map { modelContext.insert($0) }
+        try? modelContext.save()
+    }
+    
     
     public func deleteAll() throws {
-        try modelContext.delete(model: ProfileCard.self)
+        try modelContext.delete(model: Customers.self)
     }
     
 //    private static func makeHiraganaName(_ index: Int) -> String {

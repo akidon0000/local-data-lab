@@ -1,5 +1,5 @@
 //
-//  ProfileCardRow.swift
+//  CustomersCardRow.swift
 //  localDB-sampleer
 //
 //  Created by Akihiro Matsuyama on 2025/10/11.
@@ -7,11 +7,11 @@
 
 import SwiftUI
 
-struct ProfileCardRow: View {
-    let card: ProfileCard
-    let onDelete: ((ProfileCard) -> Void)?
+struct CustomersCardRow: View {
+    let card: Customers
+    let onDelete: ((Customers) -> Void)?
     
-    init(card: ProfileCard, onDelete: ((ProfileCard) -> Void)? = nil) {
+    init(card: Customers, onDelete: ((Customers) -> Void)? = nil) {
         self.card = card
         self.onDelete = onDelete
     }
@@ -36,11 +36,11 @@ struct ProfileCardRow: View {
 // プレビュー用のサンプルデータ
 #Preview {
     List {
-        ProfileCardRow(card: ProfileCard(
+        CustomersCardRow(card: Customers(
             name: "田中 太郎"
         ))
         
-        ProfileCardRow(card: ProfileCard(
+        CustomersCardRow(card: Customers(
             name: "佐藤 花子"
         ))
     }
