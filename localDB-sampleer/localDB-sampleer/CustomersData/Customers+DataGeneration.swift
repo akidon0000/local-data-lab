@@ -19,11 +19,11 @@ extension Customers {
                 items.append(customer)
             }
             
-            do {
-                try await CustomersRepository.shared.insert(items: items)
-            } catch {
-                print("データの生成に失敗しました: \(error.localizedDescription)")
-            }
+//            do {
+//                try await CustomersActor.shared.insert(items: items)
+//            } catch {
+//                print("データの生成に失敗しました: \(error.localizedDescription)")
+//            }
         }
         
         // ランダムな名前を生成する関数（ひらがな）

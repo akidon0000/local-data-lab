@@ -1,20 +1,30 @@
 //
-//  CustomersRepository.swift
+//  CustomersActor.swift
 //  localDB-sampleer
 //
-//  Created by Akihiro Matsuyama on 2025/10/11.
+//  Created by AkihiroCustomersActor Matsuyama on 2025/10/11.
 //
+// https://www.natashatherobot.com/p/swiftdata-background-swift-6
 
-import SwiftData
 import Foundation
+import SwiftData
 
 @ModelActor
-actor CustomersRepository {
-    @MainActor private(set) static var shared: CustomersRepository!
+actor CustomersActor {
+//    let modelContainer: ModelContainer
+//    
+//    init(modelContainer: ModelContainer) {
+//        self.modelContainer = modelContainer
+//    }
+//    func update() throw {
+//        guard let customers = modelContext
+//    }
     
-    @MainActor static func createSharedInstance(modelContext: ModelContext) {
-        shared = CustomersRepository(modelContainer: modelContext.container)
-    }
+//    @MainActor private(set) static var shared: CustomersActor!
+//    
+//    @MainActor static func createSharedInstance(modelContext: ModelContext) {
+//        shared = CustomersActor(modelContainer: modelContext.container)
+//    }
     
     public func fetch(offset: Int = 0, limit: Int = 50, upper: String? = nil, lower: String? = nil) -> [Customers] {
         

@@ -35,22 +35,26 @@ struct CustomersCardView: View {
     @State private var topCooldown = false             // 連打防止
     @State private var test: Int = 0 
     
+    @State private var customerActor: CustomersActor?
+    
     // セクション化は IndexedList の sectionKey 提供で対応するため未使用の補助は削除
         
     var body: some View {
         NavigationView {
             ZStack {
-                IndexedList(
-                    items: customerCards,
+                SectionedIndexedList(
+                    sections: buildSections(from: customerCards),
                     id: \.name,
-                    sectionKey: { card in
-                        guard let first = card.name.first else { return "#" }
-                        return gojuonRow(for: first)
-                    },
                     keys: sortedSectionKeys,
                     currentIndexKey: $currentIndexKey,
                     pendingScrollAnchorKey: $pendingScrollAnchorKey,
                     stickToIDAfterPrepend: $stickToIDAfterPrepend,
+                    header: { key in
+                        Text(key)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.secondary)
+                    },
                     row: { index, card in
                         CustomersCardRow(card: card)
                             .onAppear {
@@ -68,7 +72,6 @@ struct CustomersCardView: View {
                             return gojuonRow(for: first) == anchorKey
                         }
                         if exists {
-                            // 既に存在している場合でも前方プレビューを補う
                             pendingScrollAnchorKey = anchorKey
                             preloadPreviousForAnchor(anchorKey)
                         } else {
@@ -87,7 +90,7 @@ struct CustomersCardView: View {
                 }
             }
             .onAppear {
-                CustomersRepository.createSharedInstance(modelContext: modelContext)
+                self.customerActor = CustomersActor(modelContainer: modelContext.container)
                 loadInitial()
             }
             .navigationTitle("名刺一覧 \(test) 表示中: (\(customerCards.count))件")
@@ -302,9 +305,34 @@ struct CustomersCardView: View {
         }
     }
     
+    private func buildSections(from items: [Customers]) -> [IndexedSection<Customers, String>] {
+        var dict: [String: [Customers]] = [:]
+        for item in items {
+            let key: String = {
+                guard let first = item.name.first else { return "#" }
+                return gojuonRow(for: first)
+            }()
+            dict[key, default: []].append(item)
+        }
+        // キーの表示順に並べ替え
+        var result: [IndexedSection<Customers, String>] = []
+        for key in sortedSectionKeys {
+            if var arr = dict[key] {
+                arr.sort { $0.name < $1.name }
+                result.append(IndexedSection<Customers, String>(key: key, items: arr))
+            }
+        }
+        // 想定外キーがあれば末尾に
+        for (key, arr) in dict where !sortedSectionKeys.contains(key) {
+            let sorted = arr.sorted { $0.name < $1.name }
+            result.append(IndexedSection<Customers, String>(key: key, items: sorted))
+        }
+        return result
+    }
+    
     
     func deleteAllData() {
-        let repository = CustomersRepository.shared!
+        guard let repository = customerActor else { return }
         Task.detached {
             do {
                 try await repository.deleteAll()

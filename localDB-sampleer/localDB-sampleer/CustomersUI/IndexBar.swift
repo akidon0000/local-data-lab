@@ -163,3 +163,104 @@ struct IndexedList<Item, ID: Hashable, Row: View>: View {
     }
 }
 
+
+// MARK: - セクション化されたデータ用：IndexedSection と SectionedIndexedList
+/// セクション単位でアイテムを保持するための軽量構造体
+struct IndexedSection<Item, ID: Hashable>: Hashable where ID: Hashable {
+    let key: String
+    var items: [Item]
+
+    static func == (lhs: IndexedSection<Item, ID>, rhs: IndexedSection<Item, ID>) -> Bool {
+        lhs.key == rhs.key
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(key)
+    }
+}
+
+/// セクション配列をそのまま描画する IndexedList のセクション版
+struct SectionedIndexedList<Item, ID: Hashable, Row: View, SectionHeader: View>: View {
+    // セクション配列
+    let sections: [IndexedSection<Item, ID>]
+    // 行 ID に使う KeyPath（scrollTo と同一値を使用）
+    let id: KeyPath<Item, ID>
+    // サイドバーに表示するキー一覧（表示順）
+    let keys: [String]
+
+    // 現在のインデックスキー（UI 表示用）
+    @Binding var currentIndexKey: String?
+    // 読み込み完了後にスクロールすべきアンカーキー
+    @Binding var pendingScrollAnchorKey: String?
+    // 上方向プリペンド後に位置復元すべき行 ID
+    @Binding var stickToIDAfterPrepend: ID?
+
+    // セクションヘッダービュー（key から生成）
+    let header: (String) -> SectionHeader
+    // 行ビューのビルダー（index, item）
+    let row: (Int, Item) -> Row
+    // インデックスキー選択時の通知
+    let onSelectIndexKey: (String) -> Void
+
+    // 変化検知用の同値比較可能な ID 群（セクションキーも含める）
+    private var identityList: [String] {
+        var result: [String] = []
+        for section in sections {
+            result.append("S:\\(section.key)")
+            for item in section.items {
+                result.append("I:\\(String(describing: item[keyPath: id]))")
+            }
+        }
+        return result
+    }
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            List {
+                ForEach(Array(sections.enumerated()), id: \.offset) { spair in
+                    let sidx = spair.offset
+                    let section = spair.element
+                    Section(header: header(section.key).id(section.key)) {
+                        ForEach(Array(section.items.enumerated()), id: \.offset) { pair in
+                            let index = pair.offset
+                            let item = pair.element
+                            row(index, item)
+                                .id(item[keyPath: id])
+                        }
+                    }
+                }
+            }
+            // データ更新時に、必要であればアンカーまたは ID 復元へスクロール
+            .onChange(of: identityList) { _ in
+                // 位置復元を最優先（アニメーションなし）
+                if let restoreId = stickToIDAfterPrepend {
+                    withAnimation(.none) {
+                        proxy.scrollTo(restoreId, anchor: .top)
+                    }
+                    stickToIDAfterPrepend = nil
+                    return
+                }
+
+                // インデックスジャンプの pending があり、該当セクションが揃っていればスクロール
+                if let key = pendingScrollAnchorKey, containsSection(key) {
+                    withAnimation(.easeInOut) {
+                        proxy.scrollTo(key, anchor: .top)
+                    }
+                    pendingScrollAnchorKey = nil
+                }
+            }
+            // サイドバーインデックスを重ねる
+            .overlay(alignment: .trailing) {
+                IndexBar(keys: keys, currentKey: $currentIndexKey) { key in
+                    onSelectIndexKey(key)
+                }
+                .padding(.trailing, 4)
+            }
+        }
+    }
+
+    private func containsSection(_ key: String) -> Bool {
+        sections.contains { $0.key == key }
+    }
+}
+
