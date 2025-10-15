@@ -121,32 +121,33 @@ struct IndexedList<Item, ID: Hashable, Row: View>: View {
                         .id(item[keyPath: id])
                 }
             }
+            
             // データ更新時に、必要であればアンカーまたは ID 復元へスクロール
-            .onChange(of: identityList) { _ in
-                // 位置復元を最優先（アニメーションなし）
-                if let restoreId = stickToIDAfterPrepend {
-                    withAnimation(.none) {
-                        proxy.scrollTo(restoreId, anchor: .top)
-                    }
-                    stickToIDAfterPrepend = nil
-                    return
-                }
-
-                // インデックスジャンプの pending があり、該当セクションが揃っていればスクロール
-                if let key = pendingScrollAnchorKey, containsSection(key) {
-                    withAnimation(.easeInOut) {
-                        proxy.scrollTo(key, anchor: .top)
-                    }
-                    pendingScrollAnchorKey = nil
-                }
-            }
-            // サイドバーインデックスを重ねる
-            .overlay(alignment: .trailing) {
-                IndexBar(keys: keys, currentKey: $currentIndexKey) { key in
-                    onSelectIndexKey(key)
-                }
-                .padding(.trailing, 4)
-            }
+//            .onChange(of: identityList) { _ in
+//                // 位置復元を最優先（アニメーションなし）
+//                if let restoreId = stickToIDAfterPrepend {
+//                    withAnimation(.none) {
+//                        proxy.scrollTo(restoreId, anchor: .top)
+//                    }
+//                    stickToIDAfterPrepend = nil
+//                    return
+//                }
+//
+//                // インデックスジャンプの pending があり、該当セクションが揃っていればスクロール
+//                if let key = pendingScrollAnchorKey, containsSection(key) {
+//                    withAnimation(.easeInOut) {
+//                        proxy.scrollTo(key, anchor: .top)
+//                    }
+//                    pendingScrollAnchorKey = nil
+//                }
+//            }
+//            // サイドバーインデックスを重ねる
+//            .overlay(alignment: .trailing) {
+//                IndexBar(keys: keys, currentKey: $currentIndexKey) { key in
+//                    onSelectIndexKey(key)
+//                }
+//                .padding(.trailing, 4)
+//            }
         }
     }
 
@@ -216,46 +217,47 @@ struct SectionedIndexedList<Item, ID: Hashable, Row: View, SectionHeader: View>:
 
     var body: some View {
         ScrollViewReader { proxy in
-            List {
-                ForEach(Array(sections.enumerated()), id: \.offset) { spair in
-                    let sidx = spair.offset
-                    let section = spair.element
-                    Section(header: header(section.key).id(section.key)) {
-                        ForEach(Array(section.items.enumerated()), id: \.offset) { pair in
-                            let index = pair.offset
-                            let item = pair.element
-                            row(index, item)
-                                .id(item[keyPath: id])
-                        }
-                    }
-                }
-            }
+			List {
+				ForEach(sections, id: \.key) { section in
+					Section {
+						ForEach(section.items.indices, id: \.self) { index in
+							let item = section.items[index]
+							row(index, item)
+								.id(item[keyPath: id])
+						}
+					} header: {
+						header(section.key)
+							.id(section.key)
+					}
+					.sectionIndexLabel(section.key)
+				}
+			}
             // データ更新時に、必要であればアンカーまたは ID 復元へスクロール
-            .onChange(of: identityList) { _ in
-                // 位置復元を最優先（アニメーションなし）
-                if let restoreId = stickToIDAfterPrepend {
-                    withAnimation(.none) {
-                        proxy.scrollTo(restoreId, anchor: .top)
-                    }
-                    stickToIDAfterPrepend = nil
-                    return
-                }
-
-                // インデックスジャンプの pending があり、該当セクションが揃っていればスクロール
-                if let key = pendingScrollAnchorKey, containsSection(key) {
-                    withAnimation(.easeInOut) {
-                        proxy.scrollTo(key, anchor: .top)
-                    }
-                    pendingScrollAnchorKey = nil
-                }
-            }
+//            .onChange(of: identityList) { _ in
+//                // 位置復元を最優先（アニメーションなし）
+//                if let restoreId = stickToIDAfterPrepend {
+//                    withAnimation(.none) {
+//                        proxy.scrollTo(restoreId, anchor: .top)
+//                    }
+//                    stickToIDAfterPrepend = nil
+//                    return
+//                }
+//
+//                // インデックスジャンプの pending があり、該当セクションが揃っていればスクロール
+//                if let key = pendingScrollAnchorKey, containsSection(key) {
+//                    withAnimation(.easeInOut) {
+//                        proxy.scrollTo(key, anchor: .top)
+//                    }
+//                    pendingScrollAnchorKey = nil
+//                }
+//            }
             // サイドバーインデックスを重ねる
-            .overlay(alignment: .trailing) {
-                IndexBar(keys: keys, currentKey: $currentIndexKey) { key in
-                    onSelectIndexKey(key)
-                }
-                .padding(.trailing, 4)
-            }
+//            .overlay(alignment: .trailing) {
+//                IndexBar(keys: keys, currentKey: $currentIndexKey) { key in
+//                    onSelectIndexKey(key)
+//                }
+//                .padding(.trailing, 4)
+//            }
         }
     }
 

@@ -11,20 +11,6 @@ import SwiftData
 
 @ModelActor
 actor CustomersActor {
-//    let modelContainer: ModelContainer
-//    
-//    init(modelContainer: ModelContainer) {
-//        self.modelContainer = modelContainer
-//    }
-//    func update() throw {
-//        guard let customers = modelContext
-//    }
-    
-//    @MainActor private(set) static var shared: CustomersActor!
-//    
-//    @MainActor static func createSharedInstance(modelContext: ModelContext) {
-//        shared = CustomersActor(modelContainer: modelContext.container)
-//    }
     
     public func fetch(offset: Int = 0, limit: Int = 50, upper: String? = nil, lower: String? = nil) -> [Customers] {
         

@@ -30,7 +30,7 @@ extension Customers {
         func makeHiraganaName(_ length: Int) -> String {
             let chars: [Character] = Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん")
             var result = String()
-            for i in 0..<length {
+            for _ in 0..<length {
                 // 45音 + ん = 46文字
                 let pos = Int.random(in: 0..<46)
                 result.append(chars[pos])
