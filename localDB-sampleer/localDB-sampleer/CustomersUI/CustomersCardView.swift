@@ -35,21 +35,7 @@ struct CustomersCardView: View {
     @State private var topCooldown = false             // 連打防止
     @State private var test: Int = 0 
     
-    // セクション化（五十音の行ごと）
-    private var sectionedCards: [String: [Customers]] {
-        let grouped = Dictionary(grouping: customerCards) { (card: Customers) in
-            guard let first = card.name.first else { return "#" }
-            return gojuonRow(for: first)
-        }
-        var sortedGrouped: [String: [Customers]] = [:]
-        for (key, values) in grouped {
-            sortedGrouped[key] = values.sorted { $0.name < $1.name }
-        }
-        return sortedGrouped
-    }
-    
-    @State private var lastAppearedIndex: Int?
-    @State private var lastDirectionIsUp = false
+    // セクション化は IndexedList の sectionKey 提供で対応するため未使用の補助は削除
         
     var body: some View {
         NavigationView {
@@ -168,8 +154,15 @@ struct CustomersCardView: View {
         customerCards.removeAll()
         offset = 0
         Task {
-            let repo = CustomersRepository.shared!
-            let list = await repo.fetch(offset: offset, limit: limit, lower: lowerBoundKey)
+            var descriptor = FetchDescriptor<Customers>(
+                sortBy: [SortDescriptor(\Customers.name, order: .forward)]
+            )
+            if let bound = lowerBoundKey {
+                descriptor.predicate = #Predicate<Customers> { $0.name >= bound }
+            }
+            descriptor.fetchLimit = limit
+            descriptor.fetchOffset = offset
+            let list = (try? modelContext.fetch(descriptor)) ?? []
             await MainActor.run {
                 customerCards = list
                 offset += list.count
@@ -184,8 +177,15 @@ struct CustomersCardView: View {
         customerCards.removeAll()
         offset = 0
         Task {
-            let repo = CustomersRepository.shared!
-            let list = await repo.fetch(offset: offset, limit: limit, lower: lowerBoundKey)
+            var descriptor = FetchDescriptor<Customers>(
+                sortBy: [SortDescriptor(\Customers.name, order: .forward)]
+            )
+            if let bound = lowerBoundKey {
+                descriptor.predicate = #Predicate<Customers> { $0.name >= bound }
+            }
+            descriptor.fetchLimit = limit
+            descriptor.fetchOffset = offset
+            let list = (try? modelContext.fetch(descriptor)) ?? []
             await MainActor.run {
                 customerCards = list
                 offset += list.count
@@ -202,16 +202,18 @@ struct CustomersCardView: View {
         guard let prevKey = previousRowKey(for: firstKey) else { return }
         isLoading = true
         
-        var descriptor = FetchDescriptor<Customers>(
-            sortBy: [SortDescriptor(\Customers.name, order: .reverse)]
-        )
-        let lower = prevKey
-        let upper = firstKey
-        
         Task {
-            let repo = CustomersRepository.shared!
-            let fetched = repo.fetch(offset: 0, limit: 50, upper: firstKey, lower: prevKey)
-            
+            var descriptor = FetchDescriptor<Customers>(
+                sortBy: [SortDescriptor(\Customers.name, order: .reverse)]
+            )
+            let lower = prevKey
+            let upper = firstKey
+            descriptor.predicate = #Predicate<Customers> { card in
+                card.name < upper && card.name >= lower
+            }
+            descriptor.fetchLimit = 50
+            descriptor.fetchOffset = 0
+            let fetched = (try? modelContext.fetch(descriptor)) ?? []
             await MainActor.run {
                 let existing = Set(customerCards.map { $0.name })
                 let toInsert = fetched.filter { !existing.contains($0.name) }

@@ -10,9 +10,9 @@ import Foundation
 
 @ModelActor
 actor CustomersRepository {
-    private(set) static var shared: CustomersRepository!
+    @MainActor private(set) static var shared: CustomersRepository!
     
-    static func createSharedInstance(modelContext: ModelContext) {
+    @MainActor static func createSharedInstance(modelContext: ModelContext) {
         shared = CustomersRepository(modelContainer: modelContext.container)
     }
     
