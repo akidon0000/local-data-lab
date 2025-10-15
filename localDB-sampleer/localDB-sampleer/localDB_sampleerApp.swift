@@ -12,7 +12,7 @@ import SwiftData
 struct localDB_sampleerApp: App {
     var body: some Scene {
         WindowGroup {
-            FewDataView()
+            FewDataIndexView()
         }
         .modelContainer(for: Customers.self)
     }
