@@ -12,24 +12,8 @@ import SwiftData
 struct localDB_sampleerApp: App {
     var body: some Scene {
         WindowGroup {
-            TabView {
-                FewDataIndexView()
-                    .tabItem {
-                        Image(systemName: "list.bullet")
-                        Text("Simple")
-                    }
-                FewDataView()
-                    .tabItem {
-                        Image(systemName: "list.number")
-                        Text("Flat")
-                    }
-                FewDataIndexComplicatedView()
-                    .tabItem {
-                        Image(systemName: "person.text.rectangle")
-                        Text("Complex")
-                    }
-            }
+            SimpleDataListView()
         }
-        .modelContainer(for: [Customers.self, Company.self, Department.self, Address.self, Tag.self, Contact.self])
+        .modelContainer(for: [SimpleData.self])
     }
 }
