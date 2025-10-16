@@ -9,8 +9,8 @@ import SwiftData
 import SwiftUI
 
 struct SimpleDataListView: View {
-    @Environment(\.modelContext) var modelContext
-    @Query(sort: \SimpleData.name, order: .forward) var simpleDatas: [SimpleData]
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \SimpleData.name, order: .forward) private var simpleDatas: [SimpleData]
     @State private var isLoading = false
     
     // デバッグ用
@@ -77,7 +77,7 @@ struct SimpleDataListView: View {
         }
     }
     
-    func deleteAllData() {
+    private func deleteAllData() {
         do {
             try modelContext.delete(model: SimpleData.self)
         } catch {
@@ -85,7 +85,7 @@ struct SimpleDataListView: View {
         }
     }
     
-    func generateData(count: Int) {
+    private func generateData(count: Int) {
         do {
             var items = [SimpleData]()
             for _ in 0..<count {
