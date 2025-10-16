@@ -1,5 +1,5 @@
 //
-//  ComplexPagingListView.swift
+//  ComplexSearchListView.swift
 //  localDB-sampleer
 //
 //  Created by Akihiro Matsuyama on 2025/10/16.
@@ -8,7 +8,7 @@
 import SwiftData
 import SwiftUI
 
-struct ComplexPagingListView: View {
+struct ComplexSearchListView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var schools = [ComplexIndexSchool]()
     @State private var isLoading = false
@@ -16,9 +16,20 @@ struct ComplexPagingListView: View {
     @State private var offset: Int = 0
     @State private var limit: Int = 50
     
+    @State private var searchText: String = ""
+    @State private var searchTask: Task<Void, Never>? = nil
+    
     // デバッグ用
     @State private var fetchMs: Double? = nil
-  
+    
+    var searchResults: [ComplexIndexSchool] {
+           if searchText.isEmpty {
+               return schools
+           } else {
+               return schools.filter { $0.name.contains(searchText) }
+           }
+       }
+    
     var body: some View {
         List {
             ForEach(Array(schools.enumerated()), id: \.element.id) { index, school in
@@ -38,6 +49,18 @@ struct ComplexPagingListView: View {
                         buttomSentinelAppear()
                     }
                 }
+            }
+        }
+        .searchable(text: $searchText)
+        .onChange(of: searchText) { newValue in
+            // 入力が空になったら初期ロードに戻す
+            if newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                searchTask?.cancel()
+                offset = 0
+                schools.removeAll()
+                loadInitial()
+            } else {
+                performSearch(for: newValue)
             }
         }
         .onAppear {
@@ -115,6 +138,8 @@ struct ComplexPagingListView: View {
     }
     
     private func buttomSentinelAppear() {
+        // 検索中はページングしない
+        guard searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         guard !isLoading else { return }
         isLoading = true
         var descriptor = FetchDescriptor<ComplexIndexSchool>(
@@ -128,6 +153,33 @@ struct ComplexPagingListView: View {
                 schools.append(contentsOf: next)
                 offset += next.count
                 isLoading = false
+            }
+        }
+    }
+    
+    private func performSearch(for query: String) {
+        searchTask?.cancel()
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        isLoading = true
+        searchTask = Task {
+            // 軽いデバウンス（タイプ中の過剰なクエリを抑制）
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            guard !Task.isCancelled else { return }
+            let start = CFAbsoluteTimeGetCurrent()
+            var descriptor = FetchDescriptor<ComplexIndexSchool>(
+                predicate: ComplexIndexSchool.predicate(name: trimmed),
+                sortBy: [SortDescriptor(\ComplexIndexSchool.name, order: .forward)]
+            )
+            descriptor.fetchLimit = limit
+            descriptor.fetchOffset = 0
+            let list = (try? modelContext.fetch(descriptor)) ?? []
+            let elapsedMs = (CFAbsoluteTimeGetCurrent() - start) * 1000
+            await MainActor.run {
+                self.schools = list
+                self.offset = list.count
+                self.fetchMs = elapsedMs
+                self.isLoading = false
             }
         }
     }

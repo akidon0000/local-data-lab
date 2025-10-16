@@ -17,6 +17,14 @@ enum ComplexIndexDataError: Error {
 @Model final class ComplexIndexSchool {
     #Index<ComplexIndexSchool>([\.name])
     
+    static func predicate(
+        name: String
+    ) -> Predicate<ComplexIndexSchool> {
+        return #Predicate<ComplexIndexSchool> { school in
+            school.name.starts(with: name)
+        }
+    }
+    
     enum SchoolType: Codable, CaseIterable {
         case comprehensive
         case grammar
