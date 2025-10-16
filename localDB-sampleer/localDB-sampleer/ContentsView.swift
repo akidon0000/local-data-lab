@@ -6,8 +6,10 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ContentsView: View {
+    @Environment(\.modelContext) private var modelContext
 	var body: some View {
 		NavigationStack {
 			List {
@@ -15,6 +17,13 @@ struct ContentsView: View {
 				NavigationLink("SimpleSearchListView") { SimpleSearchListView() }
 				NavigationLink("SimpleIndexListView") { SimpleIndexListView() }
 				NavigationLink("SimpleData_100K_ListView") { SimpleData_100K_ListView() }
+                NavigationLink("SimpleDataWrite_100K_ListView") {
+                    SimpleDataWrite_100K_ListView(
+                        simpleDataModelActor: SimpleDataModelActor(
+                            modelContainer: modelContext.container
+                        )
+                    ) 
+                }
 				NavigationLink("ComplexDataListView") { ComplexDataListView() }
 			}
 			.navigationTitle("Contents")
