@@ -50,7 +50,6 @@ struct SimpleIndexListView: View {
                         Text(item.name)
                     }
                 }
-                .sectionIndexLabel(section.key)
             }
         }
         .overlay(alignment: .topTrailing) { PaformanceView() }

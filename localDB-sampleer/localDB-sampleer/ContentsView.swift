@@ -15,6 +15,7 @@ struct ContentsView: View {
 				NavigationLink("SimpleSearchListView") { SimpleSearchListView() }
 				NavigationLink("SimpleIndexListView") { SimpleIndexListView() }
 				NavigationLink("SimpleData_100K_ListView") { SimpleData_100K_ListView() }
+				NavigationLink("ComplexDataListView") { ComplexDataListView() }
 			}
 			.navigationTitle("Contents")
 		}

@@ -14,6 +14,12 @@ struct localDB_sampleerApp: App {
         WindowGroup {
             ContentsView()
         }
-        .modelContainer(for: [SimpleData.self, SimpleData_100K.self])
+		.modelContainer(for: [
+			SimpleData.self,
+			SimpleData_100K.self,
+			ComplexSchool.self,
+			ComplexStudent.self,
+			ComplexGrade.self
+		])
     }
 }
