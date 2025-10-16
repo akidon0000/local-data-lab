@@ -1,5 +1,5 @@
 //
-//  ComplexDataListView.swift
+//  ComplexDataIndexView.swift
 //  localDB-sampleer
 //
 //  Created by Akihiro Matsuyama on 2025/10/16.
@@ -9,16 +9,16 @@ import Dispatch
 import SwiftData
 import SwiftUI
 
-struct ComplexDataListView: View {
+struct ComplexDataIndexView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var schools: [ComplexSchool] = []
+    @State private var schools: [ComplexIndexSchool] = []
     @State private var isLoading = false
     @State private var searchText: String = ""
     
     // デバッグ用
     @State private var fetchMs: Double? = nil
     
-    var searchResults: [ComplexSchool] {
+    var searchResults: [ComplexIndexSchool] {
            if searchText.isEmpty {
                return schools
            } else {
@@ -114,7 +114,7 @@ struct ComplexDataListView: View {
     
     private func deleteAllData() {
         do {
-            try modelContext.delete(model: ComplexSchool.self)
+            try modelContext.delete(model: ComplexIndexSchool.self)
             reload()
         } catch {
             print(error)
@@ -136,12 +136,12 @@ struct ComplexDataListView: View {
     
     private func generateData(count: Int) {
         Task {
-            var created: [ComplexSchool] = []
+            var created: [ComplexIndexSchool] = []
             for _ in 0..<count {
-                if let school = try? ComplexSchool() {
+                if let school = try? ComplexIndexSchool() {
                     let studentCount = Int.random(in: 5..<21)
                     for _ in 0..<studentCount {
-                        _ = try? ComplexStudent(school: school)
+                        _ = try? ComplexIndexStudent(school: school)
                     }
                     created.append(school)
                 }
@@ -159,8 +159,8 @@ struct ComplexDataListView: View {
         fetchMs = nil
         Task {
             let fetchStart = DispatchTime.now()
-            var descriptor = FetchDescriptor<ComplexSchool>(
-                sortBy: [SortDescriptor(\ComplexSchool.name, order: .forward)]
+            var descriptor = FetchDescriptor<ComplexIndexSchool>(
+                sortBy: [SortDescriptor(\ComplexIndexSchool.name, order: .forward)]
             )
             descriptor.includePendingChanges = true
             let fetched = (try? modelContext.fetch(descriptor)) ?? []

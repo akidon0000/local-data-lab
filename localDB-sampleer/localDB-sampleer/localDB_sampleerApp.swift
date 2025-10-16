@@ -17,7 +17,7 @@ struct localDB_sampleerApp: App {
 		.modelContainer(for: [
 			SimpleData.self,
 			SimpleData_100K.self,
-			ComplexSchool.self,
+			ComplexIndexSchool.self,
 			ComplexStudent.self,
 			ComplexGrade.self
 		])

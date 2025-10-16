@@ -1,5 +1,5 @@
 //
-//  ComplexData.swift
+//  ComplexIndexData.swift
 //  localDB-sampleer
 //
 //  Created by Akihiro Matsuyama on 2025/10/16.
@@ -8,13 +8,15 @@
 import Foundation
 import SwiftData
 
-enum ComplexDataError: Error {
+enum ComplexIndexDataError: Error {
     case dataNotFound
 }
 
 // MARK: - School
 
-@Model final class ComplexSchool {
+@Model final class ComplexIndexSchool {
+    #Index<ComplexIndexSchool>([\.name])
+    
     enum SchoolType: Codable, CaseIterable {
         case comprehensive
         case grammar
@@ -27,13 +29,13 @@ enum ComplexDataError: Error {
     var location: String
     var type: SchoolType
     // 親 -> 子 側は deleteRule のみ（inverse は子側で指定）
-    @Relationship(deleteRule: .cascade) var students: [ComplexStudent]
+    @Relationship(deleteRule: .cascade) var students: [ComplexIndexStudent]
     
     init() throws {
         let name = Self.makeHiraganaName(10)
-        guard let location = ComplexDataFixtures.schoolLocations.randomElement(),
+        guard let location = ComplexIndexDataFixtures.schoolLocations.randomElement(),
               let type = SchoolType.allCases.randomElement() else {
-            throw ComplexDataError.dataNotFound
+            throw ComplexIndexDataError.dataNotFound
         }
         self.id = UUID().uuidString
         self.name = name
@@ -52,7 +54,7 @@ enum ComplexDataError: Error {
         }
         return result
     }
-    init(id: String = UUID().uuidString, name: String, location: String, type: SchoolType, students: [ComplexStudent] = []) {
+    init(id: String = UUID().uuidString, name: String, location: String, type: SchoolType, students: [ComplexIndexStudent] = []) {
         self.id = id
         self.name = name
         self.location = location
@@ -63,32 +65,32 @@ enum ComplexDataError: Error {
 
 // MARK: - Student
 
-@Model final class ComplexStudent {
+@Model final class ComplexIndexStudent {
     @Attribute(.unique) var id: String
     var firstName: String
     var surname: String
     var age: Int
     // 子 -> 親 側で inverse を指定
-    @Relationship(inverse: \ComplexSchool.students) var school: ComplexSchool?
+    @Relationship(inverse: \ComplexIndexSchool.students) var school: ComplexIndexSchool?
     // 親 -> 子 側は deleteRule のみ（inverse は子側で指定）
-    @Relationship(deleteRule: .cascade) var grades: [ComplexGrade]
+    @Relationship(deleteRule: .cascade) var grades: [ComplexIndexGrade]
     
     var displayName: String { "\(firstName) \(surname)" }
     
-    init(school: ComplexSchool) throws {
-        guard let firstName = ComplexDataFixtures.firstNames.randomElement(),
-              let surname = ComplexDataFixtures.surnames.randomElement() else {
-            throw ComplexDataError.dataNotFound
+    init(school: ComplexIndexSchool) throws {
+        guard let firstName = ComplexIndexDataFixtures.firstNames.randomElement(),
+              let surname = ComplexIndexDataFixtures.surnames.randomElement() else {
+            throw ComplexIndexDataError.dataNotFound
         }
         self.id = UUID().uuidString
         self.firstName = firstName
         self.surname = surname
         self.age = Int.random(in: 11..<18)
         self.school = school
-        self.grades = ComplexGrade.randomGrades()
+        self.grades = ComplexIndexGrade.randomGrades()
     }
     
-    init(id: String = UUID().uuidString, firstName: String, surname: String, age: Int, grades: [ComplexGrade] = [], school: ComplexSchool? = nil) {
+    init(id: String = UUID().uuidString, firstName: String, surname: String, age: Int, grades: [ComplexIndexGrade] = [], school: ComplexIndexSchool? = nil) {
         self.id = id
         self.firstName = firstName
         self.surname = surname
@@ -100,7 +102,7 @@ enum ComplexDataError: Error {
 
 // MARK: - Grade
 
-@Model final class ComplexGrade {
+@Model final class ComplexIndexGrade {
     enum Subject: String, CaseIterable {
         case maths
         case english
@@ -141,13 +143,13 @@ enum ComplexDataError: Error {
     var grade: String
     var examBoard: String
     // 子 -> 親 側で inverse を指定
-    @Relationship(inverse: \ComplexStudent.grades) var student: ComplexStudent?
+    @Relationship(inverse: \ComplexIndexStudent.grades) var student: ComplexIndexStudent?
     
     init() throws {
         guard let subject = Subject.allCases.randomElement(),
               let grade = Grade.allCases.randomElement(),
               let examBoard = ExamBoard.allCases.randomElement() else {
-            throw ComplexDataError.dataNotFound
+            throw ComplexIndexDataError.dataNotFound
         }
         self.id = UUID().uuidString
         self.subject = subject.rawValue
@@ -162,17 +164,17 @@ enum ComplexDataError: Error {
         self.grade = grade.rawValue
     }
     
-    static func randomGrades() -> [ComplexGrade] {
+    static func randomGrades() -> [ComplexIndexGrade] {
         let max = Int.random(in: 1..<7)
         return (0...max).compactMap { _ in
-            try? ComplexGrade()
+            try? ComplexIndexGrade()
         }
     }
 }
 
 // MARK: - Fixtures
 
-enum ComplexDataFixtures {
+enum ComplexIndexDataFixtures {
     static let firstNames: [String] = [
         "Liam","Noah","Oliver","Elijah","James","William","Benjamin","Lucas","Henry","Alexander",
         "Emma","Olivia","Ava","Isabella","Sophia","Charlotte","Amelia","Mia","Harper","Evelyn"
