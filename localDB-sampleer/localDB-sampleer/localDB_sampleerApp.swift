@@ -12,8 +12,8 @@ import SwiftData
 struct localDB_sampleerApp: App {
     var body: some Scene {
         WindowGroup {
-            SimpleDataListView()
+            ContentsView()
         }
-        .modelContainer(for: [SimpleData.self])
+        .modelContainer(for: [SimpleData.self, SimpleData_100K.self])
     }
 }

@@ -1,5 +1,5 @@
 //
-//  SimpleIndexListView.swift
+//  SimpleData_100K_ListView.swift
 //  localDB-sampleer
 //
 //  Created by Akihiro Matsuyama on 2025/10/16.
@@ -8,16 +8,16 @@
 import SwiftData
 import SwiftUI
 
-struct SimpleIndexListView: View {
+struct SimpleData_100K_ListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \SimpleData.name, order: .forward) private var simpleDatas: [SimpleData]
+    @Query(sort: \SimpleData_100K.name, order: .forward) private var simpleDatas: [SimpleData_100K]
     @State private var searchText: String = ""
     @State private var isLoading = false
     
     // デバッグ用
     @State private var fetchMs: Double? = nil
     
-    var searchResults: [SimpleData] {
+    var searchResults: [SimpleData_100K] {
            if searchText.isEmpty {
                return simpleDatas
            } else {
@@ -26,8 +26,8 @@ struct SimpleIndexListView: View {
        }
     
     // 先頭文字ごとにセクションを構築（simpleDatas は name で昇順ソート済み）
-    private var sections: [IndexedSection<SimpleData, String>] {
-        var result: [IndexedSection<SimpleData, String>] = []
+    private var sections: [IndexedSection<SimpleData_100K, String>] {
+        var result: [IndexedSection<SimpleData_100K, String>] = []
         var currentKey: String? = nil
         for item in searchResults {
             let key = String(item.name.prefix(1))
@@ -100,7 +100,7 @@ struct SimpleIndexListView: View {
                 
             Menu {
                 Button("10,000件追加") { generateData(count: 10000) }
-                Button("1,000,000件追加") { generateData(count: 1000000) }
+                Button("100,000件追加") { generateData(count: 100000) }
             } label: {
                 Image(systemName: "plus")
             }
@@ -109,7 +109,7 @@ struct SimpleIndexListView: View {
     
     private func deleteAllData() {
         do {
-            try modelContext.delete(model: SimpleData.self)
+            try modelContext.delete(model: SimpleData_100K.self)
         } catch {
             print(error)
         }
@@ -117,11 +117,11 @@ struct SimpleIndexListView: View {
     
     private func generateData(count: Int) {
         do {
-            var items = [SimpleData]()
+            var items = [SimpleData_100K]()
             for _ in 0..<count {
                 let nameSize = Int.random(in: 2 ... 10)
                 let randomName = makeHiraganaName(nameSize)
-                let customer = SimpleData(name: randomName)
+                let customer = SimpleData_100K(name: randomName)
                 items.append(customer)
             }
             

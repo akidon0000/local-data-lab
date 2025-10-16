@@ -17,18 +17,16 @@ struct SimpleDataListView: View {
     @State private var fetchMs: Double? = nil
   
     var body: some View {
-        NavigationView {
-            List {
-                ForEach(simpleDatas, id: \.name) { card in
-                    Text(card.name)
-                }
+        List {
+            ForEach(simpleDatas, id: \.name) { card in
+                Text(card.name)
             }
-            .overlay(alignment: .topTrailing) { PaformanceView() }
-            .navigationTitle("\(simpleDatas.count)件")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItemGroup(placement: .navigationBarTrailing) { ToolBarView() }
-            }
+        }
+        .overlay(alignment: .topTrailing) { PaformanceView() }
+        .navigationTitle("\(simpleDatas.count)件")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItemGroup(placement: .navigationBarTrailing) { ToolBarView() }
         }
     }
     
@@ -69,7 +67,7 @@ struct SimpleDataListView: View {
             }
                 
             Menu {
-                Button("10,000件追加") { generateData(count: 10000) }
+                Button("100件追加") { generateData(count: 100) }
                 Button("1,000,000件追加") { generateData(count: 1000000) }
             } label: {
                 Image(systemName: "plus")

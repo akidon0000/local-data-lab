@@ -26,20 +26,18 @@ struct SimpleSearchListView: View {
        }
   
     var body: some View {
-        NavigationView {
-            List {
-                ForEach(searchResults, id: \.name) { card in
-                    Text(card.name)
-                }
+        List {
+            ForEach(searchResults, id: \.name) { card in
+                Text(card.name)
             }
-            .overlay(alignment: .topTrailing) { PaformanceView() }
-            .navigationTitle("\(simpleDatas.count)件")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItemGroup(placement: .navigationBarTrailing) { ToolBarView() }
-            }
-            .searchable(text: $searchText)
         }
+        .overlay(alignment: .topTrailing) { PaformanceView() }
+        .navigationTitle("\(simpleDatas.count)件")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItemGroup(placement: .navigationBarTrailing) { ToolBarView() }
+        }
+        .searchable(text: $searchText)
     }
     
     @ViewBuilder
