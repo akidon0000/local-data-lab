@@ -29,6 +29,11 @@ struct ContentsView: View {
                 NavigationLink("ComplexPagingListView") { ComplexPagingListView() }
                 NavigationLink("ComplexSearchListView") { ComplexSearchListView() }
                 NavigationLink("ComplexIndexPagingListView") { ComplexIndexPagingListView() }
+                NavigationLink("ComplexAllFetchListView") { ComplexAllFetchListView(
+                    simpleDataModelActor: ComplexDataModelActor(
+                        modelContainer: modelContext.container
+                    )
+                )}
 			}
 			.navigationTitle("Contents")
 		}
