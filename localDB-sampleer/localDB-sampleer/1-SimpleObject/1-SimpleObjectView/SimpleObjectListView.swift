@@ -1,5 +1,5 @@
 //
-//  SimpleDataListView.swift
+//  SimpleObjectListView.swift
 //  localDB-sampleer
 //
 //  Created by Akihiro Matsuyama on 2025/10/15.
@@ -8,13 +8,9 @@
 import SwiftData
 import SwiftUI
 
-struct SimpleDataListView: View {
+struct SimpleObjectListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \SimpleData.name, order: .forward) private var simpleDatas: [SimpleData]
-    @State private var isLoading = false
-    
-    // デバッグ用
-    @State private var fetchMs: Double? = nil
+    @Query(sort: \SimpleObject.name, order: .forward) private var simpleDatas: [SimpleObject]
   
     var body: some View {
         List {
@@ -22,38 +18,13 @@ struct SimpleDataListView: View {
                 Text(card.name)
             }
         }
-        .overlay(alignment: .topTrailing) { PaformanceView() }
         .navigationTitle("\(simpleDatas.count)件")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) { ToolBarView() }
         }
     }
-    
-    @ViewBuilder
-    private func PaformanceView() -> some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            if isLoading {
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                        .controlSize(.small)
-                    Text("Loading...")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            if let f = fetchMs {
-                Text(String(format: "fetch: %.1f ms", f))
-                    .font(.caption2)
-            }
-        }
-        .background(.ultraThinMaterial,
-                    in: RoundedRectangle(cornerRadius: 8,
-                                         style: .continuous))
-        .padding(8)
-    }
-    
+
     @ViewBuilder
     private func ToolBarView() -> some View {
         HStack {
@@ -77,7 +48,7 @@ struct SimpleDataListView: View {
     
     private func deleteAllData() {
         do {
-            try modelContext.delete(model: SimpleData.self)
+            try modelContext.delete(model: SimpleObject.self)
         } catch {
             print(error)
         }
@@ -85,11 +56,11 @@ struct SimpleDataListView: View {
     
     private func generateData(count: Int) {
         do {
-            var items = [SimpleData]()
+            var items = [SimpleObject]()
             for _ in 0..<count {
                 let nameSize = Int.random(in: 2 ... 10)
                 let randomName = makeHiraganaName(nameSize)
-                let customer = SimpleData(name: randomName)
+                let customer = SimpleObject(name: randomName)
                 items.append(customer)
             }
             

@@ -13,9 +13,9 @@ struct ContentsView: View {
 	var body: some View {
 		NavigationStack {
 			List {
-				NavigationLink("SimpleDataListView") { SimpleDataListView() }
+				NavigationLink("1-SimpleObjectListView") { SimpleObjectListView() }
 				NavigationLink("SimpleSearchListView") { SimpleSearchListView() }
-				NavigationLink("SimpleIndexListView") { SimpleIndexListView() }
+				NavigationLink("SimpleIndexListView") { SimpleIndexLabelListView() }
 				NavigationLink("SimpleData_100K_ListView") { SimpleData_100K_ListView() }
                 NavigationLink("SimpleDataWrite_100K_ListView") {
                     SimpleDataWrite_100K_ListView(

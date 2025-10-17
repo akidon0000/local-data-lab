@@ -186,7 +186,7 @@ struct ComplexSearchListView: View {
     
     private func deleteAllData() {
         do {
-            try modelContext.delete(model: SimpleData.self)
+            try modelContext.delete(model: SimpleObject.self)
         } catch {
             print(error)
         }
@@ -194,11 +194,11 @@ struct ComplexSearchListView: View {
     
     private func generateData(count: Int) {
         do {
-            var items = [SimpleData]()
+            var items = [SimpleObject]()
             for _ in 0..<count {
                 let nameSize = Int.random(in: 2 ... 10)
                 let randomName = makeHiraganaName(nameSize)
-                let customer = SimpleData(name: randomName)
+                let customer = SimpleObject(name: randomName)
                 items.append(customer)
             }
             

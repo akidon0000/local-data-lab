@@ -10,14 +10,14 @@ import SwiftUI
 
 struct SimpleSearchListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \SimpleData.name, order: .forward) private var simpleDatas: [SimpleData]
+    @Query(sort: \SimpleObject.name, order: .forward) private var simpleDatas: [SimpleObject]
     @State private var searchText: String = ""
     @State private var isLoading = false
     
     // デバッグ用
     @State private var fetchMs: Double? = nil
     
-    var searchResults: [SimpleData] {
+    var searchResults: [SimpleObject] {
            if searchText.isEmpty {
                return simpleDatas
            } else {
@@ -87,7 +87,7 @@ struct SimpleSearchListView: View {
     
     private func deleteAllData() {
         do {
-            try modelContext.delete(model: SimpleData.self)
+            try modelContext.delete(model: SimpleObject.self)
         } catch {
             print(error)
         }
@@ -95,11 +95,11 @@ struct SimpleSearchListView: View {
     
     private func generateData(count: Int) {
         do {
-            var items = [SimpleData]()
+            var items = [SimpleObject]()
             for _ in 0..<count {
                 let nameSize = Int.random(in: 2 ... 10)
                 let randomName = makeHiraganaName(nameSize)
-                let customer = SimpleData(name: randomName)
+                let customer = SimpleObject(name: randomName)
                 items.append(customer)
             }
             

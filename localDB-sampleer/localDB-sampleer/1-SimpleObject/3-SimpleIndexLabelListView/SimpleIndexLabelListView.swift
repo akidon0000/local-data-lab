@@ -8,26 +8,26 @@
 import SwiftData
 import SwiftUI
 
-struct SimpleIndexListView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query(sort: \SimpleData.name, order: .forward) private var simpleDatas: [SimpleData]
+struct SimpleIndexLabelListView: View {
+    @Environment(\.modelContext) 
+    private var modelContext
+    
+    @Query(sort: \SimpleObject.name, order: .forward)
+    private var simpleDatas: [SimpleObject]
+    
     @State private var searchText: String = ""
-    @State private var isLoading = false
     
-    // デバッグ用
-    @State private var fetchMs: Double? = nil
-    
-    var searchResults: [SimpleData] {
-           if searchText.isEmpty {
-               return simpleDatas
-           } else {
-               return simpleDatas.filter { $0.name.contains(searchText) }
-           }
-       }
+    var searchResults: [SimpleObject] {
+        if searchText.isEmpty {
+            return simpleDatas
+        } else {
+            return simpleDatas.filter { $0.name.contains(searchText) }
+        }
+    }
     
     // 先頭文字ごとにセクションを構築（simpleDatas は name で昇順ソート済み）
-    private var sections: [IndexedSection<SimpleData, String>] {
-        var result: [IndexedSection<SimpleData, String>] = []
+    private var sections: [IndexedSection<SimpleObject, String>] {
+        var result: [IndexedSection<SimpleObject, String>] = []
         var currentKey: String? = nil
         for item in searchResults {
             let key = String(item.name.prefix(1))
@@ -50,39 +50,15 @@ struct SimpleIndexListView: View {
                         Text(item.name)
                     }
                 }
+                .sectionIndexLabel(section.key)
             }
         }
-        .overlay(alignment: .topTrailing) { PaformanceView() }
         .navigationTitle("\(simpleDatas.count)件")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) { ToolBarView() }
         }
         .searchable(text: $searchText)
-    }
-    
-    @ViewBuilder
-    private func PaformanceView() -> some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            if isLoading {
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                        .controlSize(.small)
-                    Text("Loading...")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            if let f = fetchMs {
-                Text(String(format: "fetch: %.1f ms", f))
-                    .font(.caption2)
-            }
-        }
-        .background(.ultraThinMaterial,
-                    in: RoundedRectangle(cornerRadius: 8,
-                                         style: .continuous))
-        .padding(8)
     }
     
     @ViewBuilder
@@ -108,7 +84,7 @@ struct SimpleIndexListView: View {
     
     private func deleteAllData() {
         do {
-            try modelContext.delete(model: SimpleData.self)
+            try modelContext.delete(model: SimpleObject.self)
         } catch {
             print(error)
         }
@@ -116,11 +92,11 @@ struct SimpleIndexListView: View {
     
     private func generateData(count: Int) {
         do {
-            var items = [SimpleData]()
+            var items = [SimpleObject]()
             for _ in 0..<count {
                 let nameSize = Int.random(in: 2 ... 10)
                 let randomName = makeHiraganaName(nameSize)
-                let customer = SimpleData(name: randomName)
+                let customer = SimpleObject(name: randomName)
                 items.append(customer)
             }
             

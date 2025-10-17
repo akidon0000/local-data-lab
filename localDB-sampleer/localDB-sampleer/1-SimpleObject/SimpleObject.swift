@@ -1,5 +1,5 @@
 //
-//  SimpleData.swift
+//  SimpleObject.swift
 //  localDB-sampleer
 //
 //  Created by Akihiro Matsuyama on 2025/10/16.
@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 
-@Model class SimpleData {
+@Model class SimpleObject {
     @Attribute(.unique) var id: String
     var name: String
     var creationDate: Date
@@ -19,3 +19,5 @@ import SwiftData
         self.creationDate = createdAt
     }
 }
+
+
