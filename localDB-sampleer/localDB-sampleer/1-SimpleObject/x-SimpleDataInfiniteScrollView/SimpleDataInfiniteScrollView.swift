@@ -1,100 +1,99 @@
 //
-//  SimpleData_100K_ListView.swift
+//  SimpleDataInfiniteScrollView.swift
 //  localDB-sampleer
 //
-//  Created by Akihiro Matsuyama on 2025/10/16.
+//  Created by Akihiro Matsuyama on 2025/10/18.
 //
 
-import Dispatch
 import SwiftData
 import SwiftUI
 
-struct SimpleData_100K_ListView: View {
+struct SimpleDataInfiniteScrollView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var simpleDatas: [SimpleData_100K] = []
-    @State private var sections: [IndexedSection<SimpleData_100K, String>] = []
+    @State private var simpleObjects: [SimpleData_100K] = []
     @State private var searchText: String = ""
-    @State private var isLoading = false
     
-    // デバッグ用
-    @State private var fetchMs: Double? = nil
-    @State private var sectionMs: Double? = nil
-    
-    var searchResults: [SimpleData_100K] {
-        if searchText.isEmpty {
-            return simpleDatas
-        } else {
-            return simpleDatas.filter { $0.name.contains(searchText) }
-        }
-    }
-    
-    // 先頭文字ごとにセクションを構築（simpleDatas は name で昇順ソート済み）
-//    private var sections: [IndexedSection<SimpleData_100K, String>] {
-//        var result: [IndexedSection<SimpleData_100K, String>] = []
-//        var currentKey: String? = nil
-//        for item in searchResults {
-//            let key = String(item.name.prefix(1))
-//            if key != currentKey {
-//                result.append(IndexedSection(key: key, items: []))
-//                currentKey = key
-//            }
-//            if !result.isEmpty {
-//                result[result.count - 1].items.append(item)
-//            }
-//        }
-//        return result
-//    }
-  
     var body: some View {
         List {
-            ProgressView()
-            ForEach(sections, id: \.key) { section in
-                Section(header: Text(section.key)) {
-                    ForEach(section.items, id: \.id) { item in
-                        Text(item.name)
+            ForEach(simpleObjects.enumerated(), id: \.element.id) { index, object in
+                Text(object.name)
+                    .onAppear {
+                        let listCount = self.simpleObjects.count
+                        if index >= listCount - 1 {
+                            
+                            var descriptor = FetchDescriptor<SimpleData_100K>(
+                                sortBy: [SortDescriptor(\SimpleData_100K.name, order: .forward)]
+                            )
+                            descriptor.fetchOffset = listCount
+                            descriptor.fetchLimit = 50
+                            Task {
+                                guard let nextLists = try? modelContext.fetch(descriptor) else { return }
+                                await MainActor.run { simpleObjects.append(contentsOf: nextLists) }
+                            }
+                            
+                        }
                     }
-                }
             }
         }
-        .overlay(alignment: .topTrailing) { PaformanceView() }
-        .navigationTitle("\(simpleDatas.count)件")
+        .scrollIndicators(.hidden)
+        .searchable(text: $searchText)
+        .onChange(of: searchText) { _ in
+            if !searchText.isEmpty {
+                measureAndBuildSections()
+            }else{
+                simpleObjects = []
+                reload()
+            }
+        }
+        .onAppear { if simpleObjects.isEmpty { reload() } }
+
+        .navigationTitle("\(simpleObjects.count)件")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) { ToolBarView() }
         }
-        .searchable(text: $searchText)
-        .onAppear { if simpleDatas.isEmpty { reload() } }
-        .onChange(of: searchText) { _ in
-            measureAndBuildSections()
+    }
+    
+    private func buttomSentinelAppear(offset: Int = 0, limit: Int = 50) {
+//        guard !isLoading else { return }
+//        isLoading = true
+        var descriptor = FetchDescriptor<SimpleData_100K>(
+            sortBy: [SortDescriptor(\SimpleData_100K.name, order: .forward)]
+        )
+        descriptor.fetchOffset = offset
+        descriptor.fetchLimit = limit
+        Task {
+            let next = (try? modelContext.fetch(descriptor)) ?? []
+            await MainActor.run {
+                simpleObjects.append(contentsOf: next)
+//                offset += next.count
+//                isLoading = false
+            }
         }
     }
     
-    @ViewBuilder
-    private func PaformanceView() -> some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            if isLoading {
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                        .controlSize(.small)
-                    Text("Loading...")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            if let f = fetchMs {
-                Text(String(format: "fetch: %.1f ms", f))
-                    .font(.caption2)
-            }
-            if let s = sectionMs {
-                Text(String(format: "section/sort: %.1f ms", s))
-                    .font(.caption2)
-            }
+    static func predicate(
+        name: String
+    ) -> Predicate<SimpleData_100K> {
+        return #Predicate<SimpleData_100K> { school in
+            school.name.starts(with: name)
         }
-        .background(.ultraThinMaterial,
-                    in: RoundedRectangle(cornerRadius: 8,
-                                         style: .continuous))
-        .padding(8)
+    }
+    
+    private func searchSimpleObjectsInStore(for searchText: String) {
+        let predicate = #Predicate<SimpleData_100K> { school in
+            school.name.starts(with: searchText)
+        }
+        
+        let descriptor = FetchDescriptor<SimpleData_100K>(
+            predicate: predicate,
+            sortBy: [SortDescriptor(\SimpleData_100K.name, order: .forward)]
+        )
+        
+        Task {
+            guard let searchedLists = try? modelContext.fetch(descriptor) else { return }
+            await MainActor.run { simpleObjects = searchedLists }
+        }
     }
     
     @ViewBuilder
@@ -180,21 +179,8 @@ struct SimpleData_100K_ListView: View {
         return result
     }
 
-    private func measureAndBuildSections() {
-        let sectionStart = DispatchTime.now()
-        let built = buildSections(from: searchResults)
-        let sectionEnd = DispatchTime.now()
-        let sectionDurationMs = Double(sectionEnd.uptimeNanoseconds - sectionStart.uptimeNanoseconds) / 1_000_000
-        sections = built
-        sectionMs = sectionDurationMs
-    }
 
     private func reload() {
-        guard !isLoading else { return }
-        isLoading = true
-        fetchMs = nil
-        sectionMs = nil
-        
         Task {
             // fetch
             let fetchStart = DispatchTime.now()
@@ -202,16 +188,15 @@ struct SimpleData_100K_ListView: View {
                 sortBy: [SortDescriptor(\SimpleData_100K.name, order: .forward)]
             )
             descriptor.includePendingChanges = true
+            descriptor.fetchLimit = 50
             let fetched = (try? modelContext.fetch(descriptor)) ?? []
             let fetchEnd = DispatchTime.now()
             let fetchDurationMs = Double(fetchEnd.uptimeNanoseconds - fetchStart.uptimeNanoseconds) / 1_000_000
             
             await MainActor.run {
-                simpleDatas = fetched
-                fetchMs = fetchDurationMs
+                simpleObjects = fetched
                 // 検索条件を反映したセクションを計測・構築
-                measureAndBuildSections()
-                isLoading = false
+//                measureAndBuildSections()
             }
         }
     }

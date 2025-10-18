@@ -24,6 +24,8 @@ struct ContentsView: View {
                         )
                     ) 
                 }
+                NavigationLink("SimpleDataInfiniteScrollView") { SimpleDataInfiniteScrollView() }
+                
 				NavigationLink("ComplexDataListView") { ComplexDataListView() }
                 NavigationLink("ComplexDataIndexView") { ComplexDataIndexView() }
                 NavigationLink("ComplexPagingListView") { ComplexPagingListView() }

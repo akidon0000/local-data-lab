@@ -44,6 +44,7 @@ struct SimpleIndexLabelListView: View {
   
     var body: some View {
         List {
+            ProgressView()
             ForEach(sections, id: \.key) { section in
                 Section(header: Text(section.key)) {
                     ForEach(section.items, id: \.id) { item in

@@ -15,22 +15,33 @@ struct SimpleDataWrite_100K_ListView: View {
     
     // デバッグ用
     @State private var fetchMs: Double? = nil
+    @State private var approxSizeBytes: Int = 0
+    @State private var approxSizeFormatted: String = ""
     
-    private let simpleDataModelActor: SimpleDataModelActor
+    @State private var simpleDataModelActor: SimpleDataModelActor? = nil
     
-    init(simpleDataModelActor: SimpleDataModelActor) {
-        self.simpleDataModelActor = simpleDataModelActor
+    init(simpleDataModelActor: SimpleDataModelActor? = nil) {
+        self._simpleDataModelActor = State(initialValue: simpleDataModelActor)
     }
   
     var body: some View {
         ZStack {
-            Color.black
+            ProgressView()
         }
         .overlay(alignment: .topTrailing) { PaformanceView() }
         .navigationTitle("\(simpleDatas.count)件")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) { ToolBarView() }
+        }
+        .onAppear {
+            if simpleDataModelActor == nil {
+                simpleDataModelActor = SimpleDataModelActor(modelContainer: modelContext.container)
+            }
+            updateApproxSize()
+        }
+        .onChange(of: simpleDatas.count) { _ in
+            updateApproxSize()
         }
     }
     
@@ -49,6 +60,10 @@ struct SimpleDataWrite_100K_ListView: View {
             }
             if let f = fetchMs {
                 Text(String(format: "fetch: %.1f ms", f))
+                    .font(.caption2)
+            }
+            if !approxSizeFormatted.isEmpty {
+                Text("配列のバイト数: \(approxSizeBytes) B (\(approxSizeFormatted))")
                     .font(.caption2)
             }
         }
@@ -72,7 +87,7 @@ struct SimpleDataWrite_100K_ListView: View {
                 
             Menu {
                 Button("100件追加") { generateData(count: 100) }
-                Button("1,000,000件追加") { generateData(count: 1000000) }
+                Button("100,000件追加") { generateData(count: 100000) }
             } label: {
                 Image(systemName: "plus")
             }
@@ -80,10 +95,11 @@ struct SimpleDataWrite_100K_ListView: View {
     }
     
     private func deleteAllData() {
+        guard let actor = simpleDataModelActor else { return }
         Task.detached(priority: .background) {
             await MainActor.run { isLoading = true }
             do {
-                try await simpleDataModelActor.deleteAll()
+                try await actor.deleteAll()
             } catch {
                 print(error)
             }
@@ -92,49 +108,43 @@ struct SimpleDataWrite_100K_ListView: View {
     }
     
     private func generateData(count: Int) {
+        guard let actor = simpleDataModelActor else { return }
         Task.detached(priority: .background) {
-            await MainActor.run { isLoading = true }
-            
-            let batchSize = 2000
-            var buffer = [String]()
-            buffer.reserveCapacity(batchSize)
-            for _ in 0..<count {
-                let nameSize = Int.random(in: 2 ... 10)
-                let randomName = await makeHiraganaName(nameSize)
-                buffer.append(randomName)
-                if buffer.count >= batchSize {
-                    let items = buffer
-                    do {
-                        try await simpleDataModelActor.insert(names: items)
-                    } catch {
-                        print(error)
-                    }
-                    buffer.removeAll(keepingCapacity: true)
-                    await Task.yield()
+            do {
+                var items = [SimpleData_100K]()
+                for _ in 0..<count {
+                    let customer = SimpleData_100K(name: "akidon")
+                    items.append(customer)
                 }
+                try await actor.insert(items: items)
+                await MainActor.run { isLoading = true }
+                await MainActor.run { updateApproxSize() }
+            } catch {
+                print(error)
             }
-            if !buffer.isEmpty {
-                let items = buffer
-                do {
-                    try await simpleDataModelActor.insert(names: items)
-                } catch {
-                    print(error)
-                }
-                buffer.removeAll(keepingCapacity: true)
-            }
-            await MainActor.run { isLoading = false }
         }
-        
-        // ランダムな名前を生成する関数（ひらがな）
-        func makeHiraganaName(_ length: Int) async -> String {
-            let chars: [Character] = Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん")
-            var result = String()
-            for _ in 0..<length {
-                // 45音 + ん = 46文字
-                let pos = Int.random(in: 0..<46)
-                result.append(chars[pos])
-            }
-            return result
+    }
+
+    private func updateApproxSize() {
+        // 配列自体の要素参照分（ランタイム依存・概算）。
+        // Swift のクラス配列は各要素が参照（ポインタ）を持つため、要素数分の参照サイズを足して概算。
+        let pointerBytesPerElement = MemoryLayout<UnsafeRawPointer>.size
+        var totalBytes = simpleDatas.count * pointerBytesPerElement
+        for d in simpleDatas {
+            let idBytes = d.id.utf8.count
+            let nameBytes = d.name.utf8.count
+            let dateBytes = 8
+            let overhead = 64
+            totalBytes += idBytes + nameBytes + dateBytes + overhead
         }
+        approxSizeBytes = totalBytes
+        approxSizeFormatted = byteCountFormatter(bytes: totalBytes)
+    }
+
+    private func byteCountFormatter(bytes: Int) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB, .useGB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: Int64(bytes))
     }
 }

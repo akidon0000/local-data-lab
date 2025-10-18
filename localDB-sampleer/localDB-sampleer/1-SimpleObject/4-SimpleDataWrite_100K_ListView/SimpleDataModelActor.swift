@@ -22,17 +22,6 @@ actor SimpleDataModelActor {
         _ = items.map { modelContext.insert($0) }
         try modelContext.save()
     }
-
-    func insert(names: [String]) throws {
-        for name in names {
-            modelContext.insert(SimpleData_100K(name: name))
-        }
-        try modelContext.save()
-    }
-    
-    func update(item: SimpleData_100K) throws {
-//        try modelContext.save()
-    }
     
     func deleteAll() throws {
         try modelContext.delete(model: SimpleData_100K.self)
