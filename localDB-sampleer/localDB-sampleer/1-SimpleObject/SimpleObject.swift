@@ -8,15 +8,14 @@
 import Foundation
 import SwiftData
 
-@Model class SimpleObject {
+@Model 
+class SimpleObject {
     @Attribute(.unique) var id: String
     var name: String
-    var creationDate: Date
     
-    init(name: String = "", createdAt: Date = .now) {
+    init(name: String = "") {
         self.id = UUID().uuidString
         self.name = name
-        self.creationDate = createdAt
     }
 }
 

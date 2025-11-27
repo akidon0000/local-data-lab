@@ -20,6 +20,10 @@ struct SimpleDataWrite_100K_ListView: View {
     
     @State private var simpleDataModelActor: SimpleDataModelActor? = nil
     
+    // 計測表示
+    @State private var showMetricsAlert: Bool = false
+    @State private var metricsText: String = ""
+    
     init(simpleDataModelActor: SimpleDataModelActor? = nil) {
         self._simpleDataModelActor = State(initialValue: simpleDataModelActor)
     }
@@ -28,7 +32,15 @@ struct SimpleDataWrite_100K_ListView: View {
         ZStack {
             ProgressView()
         }
-        .overlay(alignment: .topTrailing) { PaformanceView() }
+        .safeAreaInset(edge: .top) {
+            HStack {
+                if simpleDatas.isEmpty {
+                    PaformanceView()
+                }else{
+                    Text("書き込み完了")
+                }
+            }
+        }
         .navigationTitle("\(simpleDatas.count)件")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -43,16 +55,18 @@ struct SimpleDataWrite_100K_ListView: View {
         .onChange(of: simpleDatas.count) { _ in
             updateApproxSize()
         }
+        .alert("計測結果", isPresented: $showMetricsAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(metricsText)
+        }
     }
     
     @ViewBuilder
     private func PaformanceView() -> some View {
         VStack(alignment: .trailing, spacing: 4) {
-            if isLoading {
+            if isLoading && simpleDatas.isEmpty {
                 HStack(spacing: 6) {
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                        .controlSize(.small)
                     Text("Loading...")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -87,6 +101,7 @@ struct SimpleDataWrite_100K_ListView: View {
                 
             Menu {
                 Button("100件追加") { generateData(count: 100) }
+                Button("10,000件追加") { generateData(count: 10000) }
                 Button("100,000件追加") { generateData(count: 100000) }
             } label: {
                 Image(systemName: "plus")
@@ -111,13 +126,26 @@ struct SimpleDataWrite_100K_ListView: View {
         guard let actor = simpleDataModelActor else { return }
         Task.detached(priority: .background) {
             do {
+                let t0 = DispatchTime.now()
                 var items = [SimpleData_100K]()
                 for _ in 0..<count {
                     let customer = SimpleData_100K(name: "akidon")
                     items.append(customer)
                 }
-                try await actor.insert(items: items)
-                await MainActor.run { isLoading = true }
+                let t1 = DispatchTime.now()
+                let createMs = Double(t1.uptimeNanoseconds - t0.uptimeNanoseconds) / 1_000_000
+                
+                let metrics = try await actor.insert(items: items)
+                let message = String(
+                    format: "生成: %.1fms\n挿入: %.1fms\n保存: %.1fms\n合計: %.1fms\n件数: %d",
+                    createMs, metrics.insertMs, metrics.saveMs, (createMs + metrics.totalMs), count
+                )
+                print(message)
+                await MainActor.run {
+                    metricsText = message
+                    showMetricsAlert = true
+                    isLoading = true
+                }
                 await MainActor.run { updateApproxSize() }
             } catch {
                 print(error)

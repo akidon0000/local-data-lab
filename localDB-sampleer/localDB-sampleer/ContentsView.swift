@@ -13,29 +13,37 @@ struct ContentsView: View {
 	var body: some View {
 		NavigationStack {
 			List {
-				NavigationLink("1-SimpleObjectListView") { SimpleObjectListView() }
-				NavigationLink("SimpleSearchListView") { SimpleSearchListView() }
-				NavigationLink("SimpleIndexListView") { SimpleIndexLabelListView() }
-				NavigationLink("SimpleData_100K_ListView") { SimpleData_100K_ListView() }
-                NavigationLink("SimpleDataWrite_100K_ListView") {
+				Section("SwiftData") {
+					NavigationLink("SimpleObjectListView") { SimpleObjectListView() }
+//					NavigationLink("SimpleSearchListView") { SimpleSearchListView() }
+					NavigationLink("SimpleIndexListView") { SimpleIndexLabelListView() }
+                NavigationLink("SimpleWrite_100K") {
                     SimpleDataWrite_100K_ListView(
                         simpleDataModelActor: SimpleDataModelActor(
                             modelContainer: modelContext.container
                         )
                     ) 
                 }
-                NavigationLink("SimpleDataInfiniteScrollView") { SimpleDataInfiniteScrollView() }
-                
-				NavigationLink("ComplexDataListView") { ComplexDataListView() }
+					NavigationLink("SimpleRead_100K_ListView") { SimpleData_100K_ListView() }
+					NavigationLink("SimpleDataInfiniteScrollView") { SimpleDataInfiniteScrollView() }
+				}
+
+				Section("Core Data") {
+					NavigationLink("SimpleObjectCDListView") { SimpleObjectCDListView() }
+				}
+
+				Section("Complex (SwiftData)") {
+					NavigationLink("ComplexDataListView") { ComplexDataListView() }
                 NavigationLink("ComplexDataIndexView") { ComplexDataIndexView() }
                 NavigationLink("ComplexPagingListView") { ComplexPagingListView() }
                 NavigationLink("ComplexSearchListView") { ComplexSearchListView() }
                 NavigationLink("ComplexIndexPagingListView") { ComplexIndexPagingListView() }
-                NavigationLink("ComplexAllFetchListView") { ComplexAllFetchListView(
-                    simpleDataModelActor: ComplexDataModelActor(
-                        modelContainer: modelContext.container
-                    )
-                )}
+					NavigationLink("ComplexAllFetchListView") { ComplexAllFetchListView(
+						simpleDataModelActor: ComplexDataModelActor(
+							modelContainer: modelContext.container
+						)
+					)}
+				}
 			}
 			.navigationTitle("Contents")
 		}

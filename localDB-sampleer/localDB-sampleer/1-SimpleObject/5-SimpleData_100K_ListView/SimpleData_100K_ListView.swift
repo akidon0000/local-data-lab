@@ -11,8 +11,8 @@ import SwiftUI
 
 struct SimpleData_100K_ListView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var simpleDatas: [SimpleData_100K] = []
-    @State private var sections: [IndexedSection<SimpleData_100K, String>] = []
+    @State private var simpleDatas: [SimpleData_100K_2] = []
+    @State private var sections: [IndexedSection<SimpleData_100K_2, String>] = []
     @State private var searchText: String = ""
     @State private var isLoading = false
     
@@ -20,7 +20,7 @@ struct SimpleData_100K_ListView: View {
     @State private var fetchMs: Double? = nil
     @State private var sectionMs: Double? = nil
     
-    var searchResults: [SimpleData_100K] {
+    var searchResults: [SimpleData_100K_2] {
         if searchText.isEmpty {
             return simpleDatas
         } else {
@@ -47,13 +47,13 @@ struct SimpleData_100K_ListView: View {
   
     var body: some View {
         List {
-            ProgressView()
             ForEach(sections, id: \.key) { section in
                 Section(header: Text(section.key)) {
                     ForEach(section.items, id: \.id) { item in
                         Text(item.name)
                     }
                 }
+                .sectionIndexLabel(section.key)
             }
         }
         .overlay(alignment: .topTrailing) { PaformanceView() }
@@ -126,7 +126,7 @@ struct SimpleData_100K_ListView: View {
     
     private func deleteAllData() {
         do {
-            try modelContext.delete(model: SimpleData_100K.self)
+            try modelContext.delete(model: SimpleData_100K_2.self)
             reload()
         } catch {
             print(error)
@@ -135,11 +135,11 @@ struct SimpleData_100K_ListView: View {
     
     private func generateData(count: Int) {
         do {
-            var items = [SimpleData_100K]()
+            var items = [SimpleData_100K_2]()
             for _ in 0..<count {
                 let nameSize = Int.random(in: 2 ... 10)
                 let randomName = makeHiraganaName(nameSize)
-                let customer = SimpleData_100K(name: randomName)
+                let customer = SimpleData_100K_2(name: randomName)
                 items.append(customer)
             }
             
@@ -164,8 +164,8 @@ struct SimpleData_100K_ListView: View {
     }
 
     // 先頭文字ごとにセクションを構築（items は name で昇順ソート済み想定）
-    private func buildSections(from source: [SimpleData_100K]) -> [IndexedSection<SimpleData_100K, String>] {
-        var result: [IndexedSection<SimpleData_100K, String>] = []
+    private func buildSections(from source: [SimpleData_100K_2]) -> [IndexedSection<SimpleData_100K_2, String>] {
+        var result: [IndexedSection<SimpleData_100K_2, String>] = []
         var currentKey: String? = nil
         for item in source {
             let key = String(item.name.prefix(1))
@@ -198,8 +198,8 @@ struct SimpleData_100K_ListView: View {
         Task {
             // fetch
             let fetchStart = DispatchTime.now()
-            var descriptor = FetchDescriptor<SimpleData_100K>(
-                sortBy: [SortDescriptor(\SimpleData_100K.name, order: .forward)]
+            var descriptor = FetchDescriptor<SimpleData_100K_2>(
+                sortBy: [SortDescriptor(\SimpleData_100K_2.name, order: .forward)]
             )
             descriptor.includePendingChanges = true
             let fetched = (try? modelContext.fetch(descriptor)) ?? []

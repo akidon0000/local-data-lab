@@ -18,9 +18,16 @@ actor SimpleDataModelActor {
         return try modelContext.fetch(descriptor)
     }
     
-    func insert(items: [SimpleData_100K]) throws {
+    func insert(items: [SimpleData_100K]) throws -> (insertMs: Double, saveMs: Double, totalMs: Double) {
+        let t0 = DispatchTime.now()
         _ = items.map { modelContext.insert($0) }
+        let t1 = DispatchTime.now()
         try modelContext.save()
+        let t2 = DispatchTime.now()
+        let insertMs = Double(t1.uptimeNanoseconds - t0.uptimeNanoseconds) / 1_000_000
+        let saveMs = Double(t2.uptimeNanoseconds - t1.uptimeNanoseconds) / 1_000_000
+        let totalMs = Double(t2.uptimeNanoseconds - t0.uptimeNanoseconds) / 1_000_000
+        return (insertMs, saveMs, totalMs)
     }
     
     func deleteAll() throws {

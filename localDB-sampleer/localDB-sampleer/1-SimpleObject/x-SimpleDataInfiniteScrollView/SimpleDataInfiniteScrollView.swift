@@ -39,7 +39,7 @@ struct SimpleDataInfiniteScrollView: View {
         .searchable(text: $searchText)
         .onChange(of: searchText) { _ in
             if !searchText.isEmpty {
-                measureAndBuildSections()
+//                measureAndBuildSections()
             }else{
                 simpleObjects = []
                 reload()
@@ -178,6 +178,15 @@ struct SimpleDataInfiniteScrollView: View {
         }
         return result
     }
+    
+//    private func measureAndBuildSections() {
+//        let sectionStart = DispatchTime.now()
+//        let built = buildSections(from: searchResults)
+//        let sectionEnd = DispatchTime.now()
+//        let sectionDurationMs = Double(sectionEnd.uptimeNanoseconds - sectionStart.uptimeNanoseconds) / 1_000_000
+//        sections = built
+//        sectionMs = sectionDurationMs
+//    }
 
 
     private func reload() {

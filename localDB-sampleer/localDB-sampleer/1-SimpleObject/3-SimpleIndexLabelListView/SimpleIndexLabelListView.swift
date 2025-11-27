@@ -44,7 +44,6 @@ struct SimpleIndexLabelListView: View {
   
     var body: some View {
         List {
-            ProgressView()
             ForEach(sections, id: \.key) { section in
                 Section(header: Text(section.key)) {
                     ForEach(section.items, id: \.id) { item in
@@ -76,7 +75,7 @@ struct SimpleIndexLabelListView: View {
                 
             Menu {
                 Button("10,000件追加") { generateData(count: 10000) }
-                Button("1,000,000件追加") { generateData(count: 1000000) }
+                Button("100,000件追加") { generateData(count: 100000) }
             } label: {
                 Image(systemName: "plus")
             }
