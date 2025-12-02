@@ -1,6 +1,6 @@
 //
-//  localDB_sampleerApp.swift
-//  localDB-sampleer
+//  LocalDataLabApp.swift
+//  LocalDataLab
 //
 //  Created by Akihiro Matsuyama on 2025/09/25.
 //
@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct localDB_sampleerApp: App {
+struct LocalDataLabApp: App {
     let persistenceController = PersistenceController.shared
 
     var body: some Scene {

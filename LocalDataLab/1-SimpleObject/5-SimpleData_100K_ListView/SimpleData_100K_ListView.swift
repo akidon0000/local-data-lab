@@ -1,6 +1,6 @@
 //
 //  SimpleData_100K_ListView.swift
-//  localDB-sampleer
+//  LocalDataLab
 //
 //  Created by Akihiro Matsuyama on 2025/10/16.
 //

@@ -1,6 +1,6 @@
 //
 //  PersistenceController.swift
-//  localDB-sampleer
+//  LocalDataLab
 //
 //  Created by Claude Code
 //
