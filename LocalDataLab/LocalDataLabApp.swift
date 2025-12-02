@@ -6,24 +6,12 @@
 //
 
 import SwiftUI
-import SwiftData
 
 @main
 struct LocalDataLabApp: App {
-    let persistenceController = PersistenceController.shared
-
     var body: some Scene {
         WindowGroup {
-            HomeView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            Home()
         }
-		.modelContainer(for: [
-			SimpleObject.self,
-            SimpleData_100K_2.self,
-			SimpleData_100K.self,
-			ComplexIndexSchool.self,
-			ComplexStudent.self,
-			ComplexGrade.self
-		])
     }
 }

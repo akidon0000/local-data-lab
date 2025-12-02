@@ -8,8 +8,10 @@
 import SwiftUI
 import SwiftData
 
-struct HomeView: View {
+struct Home: View {
+    let persistenceController = PersistenceController.shared
     @Environment(\.modelContext) private var modelContext
+
 	var body: some View {
 		NavigationStack {
 			List {
@@ -47,6 +49,15 @@ struct HomeView: View {
 			}
 			.navigationTitle("Home")
 		}
+		.environment(\.managedObjectContext, persistenceController.container.viewContext)
+		.modelContainer(for: [
+			SimpleObject.self,
+			SimpleData_100K_2.self,
+			SimpleData_100K.self,
+			ComplexIndexSchool.self,
+			ComplexStudent.self,
+			ComplexGrade.self
+		])
 	}
 }
 
