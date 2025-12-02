@@ -14,7 +14,7 @@ struct LocalDataLabApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentsView()
+            HomeView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
 		.modelContainer(for: [
