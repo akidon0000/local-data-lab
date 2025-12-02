@@ -17,14 +17,13 @@ struct Home: View {
 			List {
 				Section("SwiftData") {
 					NavigationLink("SimpleObjectListView") { SimpleObjectListView() }
-//					NavigationLink("SimpleSearchListView") { SimpleSearchListView() }
-					NavigationLink("SimpleIndexListView") { SimpleIndexLabelListView() }
+					NavigationLink("SimpleSearchListView") { SimpleSearchListView() }
                 NavigationLink("SimpleWrite_100K") {
                     SimpleDataWrite_100K_ListView(
                         simpleDataModelActor: SimpleDataModelActor(
                             modelContainer: modelContext.container
                         )
-                    ) 
+                    )
                 }
 					NavigationLink("SimpleRead_100K_ListView") { SimpleData_100K_ListView() }
 					NavigationLink("SimpleDataInfiniteScrollView") { SimpleDataInfiniteScrollView() }
