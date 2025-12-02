@@ -8,9 +8,8 @@
 import Foundation
 import SwiftData
 
-@Model 
+@Model
 class SimpleObject {
-    #Index<SimpleObject>([\.name])
     @Attribute(.unique) var id: String
     var name: String
     
@@ -19,5 +18,3 @@ class SimpleObject {
         self.name = name
     }
 }
-
-
