@@ -1,5 +1,5 @@
 //
-//  ContentsView.swift
+//  HomeView.swift
 //  LocalDataLab
 //
 //  Created by Akihiro Matsuyama on 2025/10/16.
@@ -8,7 +8,7 @@
 import SwiftUI
 import SwiftData
 
-struct ContentsView: View {
+struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
 	var body: some View {
 		NavigationStack {
@@ -45,7 +45,7 @@ struct ContentsView: View {
 					)}
 				}
 			}
-			.navigationTitle("Contents")
+			.navigationTitle("Home")
 		}
 	}
 }
