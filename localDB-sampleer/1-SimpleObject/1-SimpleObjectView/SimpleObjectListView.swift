@@ -16,7 +16,7 @@ struct SimpleObjectListView: View {
   
     var body: some View {
         List {
-            ForEach(simpleDatas, id: \.name) { card in
+            ForEach(simpleDatas, id: \.id) { card in
                 Text(card.name)
             }
         }
@@ -45,6 +45,7 @@ struct SimpleObjectListView: View {
             }
                 
             Menu {
+                Button("1件追加") { generateData(count: 1) }
                 Button("100件追加") { generateData(count: 100) }
                 Button("100,000件追加") { generateData(count: 100000) }
             } label: {
@@ -83,7 +84,7 @@ struct SimpleObjectListView: View {
             let totalMs = Double(t3.uptimeNanoseconds - t0.uptimeNanoseconds) / 1_000_000
             
             let message = String(format: "生成: %.1fms\n挿入: %.1fms\n保存: %.1fms\n合計: %.1fms\n件数: %d", createMs, insertMs, saveMs, totalMs, count)
-            print(message)
+//            print(message)
             metricsText = message
             showMetricsAlert = true
         } catch {

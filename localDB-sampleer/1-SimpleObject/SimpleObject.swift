@@ -10,6 +10,7 @@ import SwiftData
 
 @Model 
 class SimpleObject {
+    #Index<SimpleObject>([\.name])
     @Attribute(.unique) var id: String
     var name: String
     
