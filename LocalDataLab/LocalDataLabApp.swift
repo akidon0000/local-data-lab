@@ -11,7 +11,14 @@ import SwiftUI
 struct LocalDataLabApp: App {
     var body: some Scene {
         WindowGroup {
-            Home()
+//            Sample()
+            HomeView()
         }
+    }
+}
+
+struct Sample: View {
+    var body: some View {
+        Text("Hello, World!")
     }
 }
