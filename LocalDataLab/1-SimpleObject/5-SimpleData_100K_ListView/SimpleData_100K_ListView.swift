@@ -27,24 +27,7 @@ struct SimpleData_100K_ListView: View {
             return simpleDatas.filter { $0.name.contains(searchText) }
         }
     }
-    
-    // 先頭文字ごとにセクションを構築（simpleDatas は name で昇順ソート済み）
-//    private var sections: [IndexedSection<SimpleData_100K, String>] {
-//        var result: [IndexedSection<SimpleData_100K, String>] = []
-//        var currentKey: String? = nil
-//        for item in searchResults {
-//            let key = String(item.name.prefix(1))
-//            if key != currentKey {
-//                result.append(IndexedSection(key: key, items: []))
-//                currentKey = key
-//            }
-//            if !result.isEmpty {
-//                result[result.count - 1].items.append(item)
-//            }
-//        }
-//        return result
-//    }
-  
+
     var body: some View {
         List {
             ForEach(sections, id: \.key) { section in
@@ -56,7 +39,7 @@ struct SimpleData_100K_ListView: View {
                 .sectionIndexLabel(section.key)
             }
         }
-        .overlay(alignment: .topTrailing) { PaformanceView() }
+        .overlay(alignment: .topTrailing) { PerformanceView() }
         .navigationTitle("\(simpleDatas.count)件")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -70,7 +53,7 @@ struct SimpleData_100K_ListView: View {
     }
     
     @ViewBuilder
-    private func PaformanceView() -> some View {
+    private func PerformanceView() -> some View {
         VStack(alignment: .trailing, spacing: 4) {
             if isLoading {
                 HStack(spacing: 6) {

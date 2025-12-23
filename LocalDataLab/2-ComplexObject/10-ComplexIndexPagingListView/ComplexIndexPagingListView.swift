@@ -88,7 +88,7 @@ struct ComplexIndexPagingListView: View {
                 }
             )
 
-            PaformanceView()
+            PerformanceView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
 
             if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -134,7 +134,7 @@ struct ComplexIndexPagingListView: View {
     }
     
     @ViewBuilder
-    private func PaformanceView() -> some View {
+    private func PerformanceView() -> some View {
         VStack(alignment: .trailing, spacing: 4) {
             if isLoading {
                 HStack(spacing: 6) {
@@ -355,38 +355,37 @@ struct ComplexIndexPagingListView: View {
     
     private func deleteAllData() {
         do {
-            try modelContext.delete(model: SimpleObject.self)
+            try modelContext.delete(model: ComplexIndexSchool.self)
+            schools.removeAll()
+            offset = 0
+            pendingScrollAnchorKey = nil
+            lowerBoundKey = nil
         } catch {
             print(error)
         }
     }
-    
+
     private func generateData(count: Int) {
-        do {
-            var items = [SimpleObject]()
+        Task {
+            var created: [ComplexIndexSchool] = []
             for _ in 0..<count {
-                let nameSize = Int.random(in: 2 ... 10)
-                let randomName = makeHiraganaName(nameSize)
-                let customer = SimpleObject(name: randomName)
-                items.append(customer)
+                if let school = try? ComplexIndexSchool() {
+                    let studentCount = Int.random(in: 5..<21)
+                    for _ in 0..<studentCount {
+                        _ = try? ComplexIndexStudent(school: school)
+                    }
+                    created.append(school)
+                }
             }
-            
-            _ = items.map { modelContext.insert($0) }
-            try modelContext.save()
-        } catch {
-            print(error)
-        }
-        
-        // ランダムな名前を生成する関数（ひらがな）
-        func makeHiraganaName(_ length: Int) -> String {
-            let chars: [Character] = Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん")
-            var result = String()
-            for _ in 0..<length {
-                // 45音 + ん = 46文字
-                let pos = Int.random(in: 0..<46)
-                result.append(chars[pos])
+            _ = created.map { modelContext.insert($0) }
+            do { try modelContext.save() } catch { print(error) }
+            await MainActor.run {
+                offset = 0
+                schools.removeAll()
+                pendingScrollAnchorKey = nil
+                lowerBoundKey = nil
+                loadInitial()
             }
-            return result
         }
     }
 }

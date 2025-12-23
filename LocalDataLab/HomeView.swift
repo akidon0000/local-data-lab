@@ -14,18 +14,15 @@ struct HomeView: View {
 			List {
 				Section("SwiftData") {
 					NavigationLink("[SimpleObject] View") { SimpleObjectListView() }
-//                    NavigationLink("[SimpleObject] 検索 & IndexLabel") { SimpleSearchListView() }
-                    NavigationLink("[SimpleObject + #Index] View") { SimpleIndexObjectListView() }
-                    NavigationLink("[SimpleDescriptorObject + FetchDescriptor] 検索") { SimpleDescriptorSearchListView() }
+					NavigationLink("[SimpleObject + #Index] View") { SimpleIndexObjectListView() }
+					NavigationLink("[SimpleDescriptorObject + FetchDescriptor] 検索") { SimpleDescriptorSearchListView() }
 				}
 			}
 		}
 		.modelContainer(for: [
 			SimpleObject.self,
-            SimpleIndexObject.self,
-            SimpleDescriptorObject.self,
-//			  User.self,
-//			  Post.self
+			SimpleIndexObject.self,
+			SimpleDescriptorObject.self,
 		])
 	}
 }
