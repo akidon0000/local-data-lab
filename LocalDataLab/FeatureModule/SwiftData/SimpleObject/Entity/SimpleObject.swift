@@ -11,10 +11,10 @@ import SwiftData
 @Model
 class SimpleObject {
     @Attribute(.unique) var id: String
-    var name: String
+    var nameStr: String
     
     init(name: String = "") {
         self.id = UUID().uuidString
-        self.name = name
+        self.nameStr = name
     }
 }

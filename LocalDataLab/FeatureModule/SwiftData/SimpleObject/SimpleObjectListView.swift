@@ -10,12 +10,12 @@ import SwiftUI
 
 struct SimpleObjectListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \SimpleObject.name, order: .reverse) private var simpleDatas: [SimpleObject]
+    @Query(sort: \SimpleObject.nameStr, order: .reverse) private var simpleDatas: [SimpleObject]
 
     var body: some View {
         List {
             ForEach(simpleDatas, id: \.id) { card in
-                Text(card.name)
+                Text(card.nameStr)
             }
         }
         .navigationTitle("\(simpleDatas.count)件")

@@ -7,6 +7,7 @@
 
 import SwiftData
 import SwiftUI
+import SQLite3
 
 struct SimpleDescriptorSearchListView: View {
     @Environment(\.modelContext) private var modelContext
@@ -27,7 +28,7 @@ struct SimpleDescriptorSearchListView: View {
         .toolbar {
             ToolbarItemGroup(placement: .navigationBarTrailing) { ToolBarView() }
         }
-        .searchable(text: $searchText, prompt: "名前で検索")
+        .searchable(text: $searchText, prompt: "名前の前方一致で検索")
         .onChange(of: searchText) { _, newValue in
             performSearch(query: newValue)
         }
@@ -71,6 +72,12 @@ struct SimpleDescriptorSearchListView: View {
     @ViewBuilder
     private func ToolBarView() -> some View {
         HStack {
+            Button(action: {
+                explainQuery()
+            }) {
+                Image(systemName: "info.circle")
+            }
+
             Menu {
                 Button("全て削除", role: .destructive) {
                     deleteAllData()
@@ -105,10 +112,10 @@ struct SimpleDescriptorSearchListView: View {
                         sortBy: [SortDescriptor(\.name, order: .forward)]
                     )
                 } else {
-                    // 検索クエリがある場合はPredicateで絞り込み
+                    // 検索クエリがある場合はPredicateで絞り込み（前方一致）
                     descriptor = FetchDescriptor<SimpleDescriptorObject>(
                         predicate: #Predicate { object in
-                            object.name.contains(query)
+                            object.name.starts(with: query)
                         },
                         sortBy: [SortDescriptor(\.name, order: .forward)]
                     )
@@ -194,5 +201,42 @@ struct SimpleDescriptorSearchListView: View {
             result.append(chars[pos])
         }
         return result
+    }
+
+    // MARK: - Debug: Explain Query Plan
+    private func explainQuery() {
+        guard let url = modelContext.container.configurations.first?.url else {
+            print("🚨 SQLite file URL not found")
+            return
+        }
+
+        var db: OpaquePointer?
+
+        if sqlite3_open(url.path, &db) == SQLITE_OK {
+            let sql = """
+            EXPLAIN QUERY PLAN
+            SELECT * FROM ZSIMPLEDESCRIPTOROBJECT
+            WHERE ZNAME LIKE 'あ%'
+            ORDER BY ZNAME COLLATE BINARY;
+            """
+
+            var stmt: OpaquePointer?
+            if sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK {
+                print("📊 Query Plan:")
+                while sqlite3_step(stmt) == SQLITE_ROW {
+                    let col0 = sqlite3_column_text(stmt, 0).map { String(cString: $0) } ?? ""
+                    let col1 = sqlite3_column_text(stmt, 1).map { String(cString: $0) } ?? ""
+                    let col2 = sqlite3_column_text(stmt, 2).map { String(cString: $0) } ?? ""
+                    let col3 = sqlite3_column_text(stmt, 3).map { String(cString: $0) } ?? ""
+                    print("  \(col0) | \(col1) | \(col2) | \(col3)")
+                }
+                sqlite3_finalize(stmt)
+            } else {
+                print("🚨 Failed to prepare statement")
+            }
+            sqlite3_close(db)
+        } else {
+            print("🚨 Failed to open database")
+        }
     }
 }

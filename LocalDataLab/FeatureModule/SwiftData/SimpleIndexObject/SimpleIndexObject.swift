@@ -11,7 +11,6 @@ import SwiftData
 @Model
 class SimpleIndexObject {
     @Attribute(.unique) var id: String
-    #Index<SimpleIndexObject>([\.name])
     var name: String
 
     init(name: String = "") {

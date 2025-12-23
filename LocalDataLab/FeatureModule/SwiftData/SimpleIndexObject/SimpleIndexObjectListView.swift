@@ -60,12 +60,25 @@ struct SimpleIndexObjectListView: View {
     private func generateData(count: Int) {
         do {
             for _ in 0..<count {
-                let customer = SimpleIndexObject(name: "akidon")
+                let nameSize = Int.random(in: 2 ... 10)
+                let randomName = makeHiraganaName(nameSize)
+                let customer = SimpleIndexObject(name: randomName)
                 modelContext.insert(customer)
             }
             try modelContext.save()
         } catch {
             print("🚨", error)
         }
+    }
+
+    // ランダムな名前を生成する関数（ひらがな）
+    private func makeHiraganaName(_ length: Int) -> String {
+        let chars: [Character] = Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん")
+        var result = String()
+        for _ in 0..<length {
+            let pos = Int.random(in: 0..<46)
+            result.append(chars[pos])
+        }
+        return result
     }
 }
