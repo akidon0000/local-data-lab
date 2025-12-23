@@ -169,8 +169,8 @@ struct SimpleDescriptorSearchListView: View {
             do {
                 var items = [SimpleDescriptorObject]()
                 for _ in 0..<count {
-                    let nameSize = Int.random(in: 2 ... 10)
-                    let randomName = makeHiraganaName(nameSize)
+                    let nameSize = Int.random(in: 2...10)
+                    let randomName = HiraganaGenerator.makeRandomName(length: nameSize)
                     let object = SimpleDescriptorObject(name: randomName)
                     items.append(object)
                 }
@@ -190,17 +190,6 @@ struct SimpleDescriptorSearchListView: View {
                 }
             }
         }
-    }
-
-    // ランダムな名前を生成する関数（ひらがな）
-    private func makeHiraganaName(_ length: Int) -> String {
-        let chars: [Character] = Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん")
-        var result = String()
-        for _ in 0..<length {
-            let pos = Int.random(in: 0..<46)
-            result.append(chars[pos])
-        }
-        return result
     }
 
     // MARK: - Debug: Explain Query Plan

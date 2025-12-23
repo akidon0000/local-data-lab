@@ -136,29 +136,17 @@ struct SimpleDataInfiniteScrollView: View {
         do {
             var items = [SimpleData_100K]()
             for _ in 0..<count {
-                let nameSize = Int.random(in: 2 ... 10)
-                let randomName = makeHiraganaName(nameSize)
+                let nameSize = Int.random(in: 2...10)
+                let randomName = HiraganaGenerator.makeRandomName(length: nameSize)
                 let customer = SimpleData_100K(name: randomName)
                 items.append(customer)
             }
-            
+
             _ = items.map { modelContext.insert($0) }
             try modelContext.save()
             reload()
         } catch {
             print(error)
-        }
-        
-        // ランダムな名前を生成する関数（ひらがな）
-        func makeHiraganaName(_ length: Int) -> String {
-            let chars: [Character] = Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん")
-            var result = String()
-            for _ in 0..<length {
-                // 45音 + ん = 46文字
-                let pos = Int.random(in: 0..<46)
-                result.append(chars[pos])
-            }
-            return result
         }
     }
 

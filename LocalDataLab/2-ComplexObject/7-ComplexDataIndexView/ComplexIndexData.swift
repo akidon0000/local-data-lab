@@ -40,7 +40,7 @@ enum ComplexIndexDataError: Error {
     @Relationship(deleteRule: .cascade) var students: [ComplexIndexStudent]
     
     init() throws {
-        let name = Self.makeHiraganaName(10)
+        let name = HiraganaGenerator.makeRandomName(length: 10)
         guard let location = ComplexIndexDataFixtures.schoolLocations.randomElement(),
               let type = SchoolType.allCases.randomElement() else {
             throw ComplexIndexDataError.dataNotFound
@@ -50,17 +50,6 @@ enum ComplexIndexDataError: Error {
         self.location = location
         self.type = type
         self.students = []
-    }
-
-    private static func makeHiraganaName(_ length: Int) -> String {
-        let chars: [Character] = Array("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん")
-        var result = String()
-        result.reserveCapacity(length)
-        for _ in 0..<length {
-            let pos = Int.random(in: 0..<chars.count)
-            result.append(chars[pos])
-        }
-        return result
     }
     init(id: String = UUID().uuidString, name: String, location: String, type: SchoolType, students: [ComplexIndexStudent] = []) {
         self.id = id

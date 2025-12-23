@@ -35,7 +35,7 @@ struct SimpleDataWrite_100K_ListView: View {
         .safeAreaInset(edge: .top) {
             HStack {
                 if simpleDatas.isEmpty {
-                    PaformanceView()
+                    PerformanceView()
                 }else{
                     Text("書き込み完了")
                 }
@@ -63,7 +63,7 @@ struct SimpleDataWrite_100K_ListView: View {
     }
     
     @ViewBuilder
-    private func PaformanceView() -> some View {
+    private func PerformanceView() -> some View {
         VStack(alignment: .trailing, spacing: 4) {
             if isLoading && simpleDatas.isEmpty {
                 HStack(spacing: 6) {
