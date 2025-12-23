@@ -39,7 +39,7 @@ jobs:
             PROMPT="このSwiftプロジェクトをレビューし、コードの品質向上のためのリファクタリングを行ってください。変更がある場合のみコミットしてください。"
           fi
 
-          claude -p "$PROMPT" --allowedTools "Edit,Read,Glob,Grep,Write,Bash" --yes
+          claude -p "$PROMPT" --allowedTools "Edit,Read,Glob,Grep,Write,Bash" --dangerously-skip-permissions
 
       - name: Check for changes
         id: changes
