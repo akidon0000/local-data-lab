@@ -44,7 +44,7 @@ struct ComplexDataIndexView: View {
             .onDelete(perform: delete)
         }
         .searchable(text: $searchText)
-        .overlay(alignment: .topTrailing) { PaformanceView() }
+        .overlay(alignment: .topTrailing) { PerformanceView() }
         .overlay(alignment: .center) {
             if schools.isEmpty && !isLoading {
                 VStack(spacing: 12) {
@@ -66,7 +66,7 @@ struct ComplexDataIndexView: View {
     }
     
     @ViewBuilder
-    private func PaformanceView() -> some View {
+    private func PerformanceView() -> some View {
         VStack(alignment: .trailing, spacing: 4) {
             if isLoading {
                 HStack(spacing: 6) {

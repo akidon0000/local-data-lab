@@ -68,7 +68,7 @@ struct ComplexIndexPagingListView: View {
                     }
                     .onAppear {
                         if let lastId = schools.last?.id, lastId == school.id {
-                            buttomSentinelAppear()
+                            bottomSentinelAppear()
                         }
                     }
                 },
@@ -88,7 +88,7 @@ struct ComplexIndexPagingListView: View {
                 }
             )
 
-            PaformanceView()
+            PerformanceView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
 
             if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -134,7 +134,7 @@ struct ComplexIndexPagingListView: View {
     }
     
     @ViewBuilder
-    private func PaformanceView() -> some View {
+    private func PerformanceView() -> some View {
         VStack(alignment: .trailing, spacing: 4) {
             if isLoading {
                 HStack(spacing: 6) {
@@ -199,7 +199,7 @@ struct ComplexIndexPagingListView: View {
         }
     }
     
-    private func buttomSentinelAppear() {
+    private func bottomSentinelAppear() {
         // 検索中はページングしない
         guard searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         guard !isLoading else { return }

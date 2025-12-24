@@ -46,7 +46,7 @@ struct ComplexSearchListView: View {
                 }
                 .onAppear {
                     if index >= schools.count - 1 {
-                        buttomSentinelAppear()
+                        bottomSentinelAppear()
                     }
                 }
             }
@@ -66,7 +66,7 @@ struct ComplexSearchListView: View {
         .onAppear {
             loadInitial()
         }
-        .overlay(alignment: .topTrailing) { PaformanceView() }
+        .overlay(alignment: .topTrailing) { PerformanceView() }
         .navigationTitle("\(schools.count)件")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -75,7 +75,7 @@ struct ComplexSearchListView: View {
     }
     
     @ViewBuilder
-    private func PaformanceView() -> some View {
+    private func PerformanceView() -> some View {
         VStack(alignment: .trailing, spacing: 4) {
             if isLoading {
                 HStack(spacing: 6) {
@@ -137,7 +137,7 @@ struct ComplexSearchListView: View {
         }
     }
     
-    private func buttomSentinelAppear() {
+    private func bottomSentinelAppear() {
         // 検索中はページングしない
         guard searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         guard !isLoading else { return }

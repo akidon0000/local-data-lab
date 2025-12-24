@@ -35,7 +35,7 @@ struct ComplexPagingListView: View {
                 }
                 .onAppear {
                     if index >= schools.count - 1 {
-                        buttomSentinelAppear()
+                        bottomSentinelAppear()
                     }
                 }
             }
@@ -43,7 +43,7 @@ struct ComplexPagingListView: View {
         .onAppear {
             loadInitial()
         }
-        .overlay(alignment: .topTrailing) { PaformanceView() }
+        .overlay(alignment: .topTrailing) { PerformanceView() }
         .navigationTitle("\(schools.count)件")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -52,7 +52,7 @@ struct ComplexPagingListView: View {
     }
     
     @ViewBuilder
-    private func PaformanceView() -> some View {
+    private func PerformanceView() -> some View {
         VStack(alignment: .trailing, spacing: 4) {
             if isLoading {
                 HStack(spacing: 6) {
@@ -114,7 +114,7 @@ struct ComplexPagingListView: View {
         }
     }
     
-    private func buttomSentinelAppear() {
+    private func bottomSentinelAppear() {
         guard !isLoading else { return }
         isLoading = true
         var descriptor = FetchDescriptor<ComplexIndexSchool>(
