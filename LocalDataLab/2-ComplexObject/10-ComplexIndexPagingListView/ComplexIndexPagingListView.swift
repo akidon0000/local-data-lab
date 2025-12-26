@@ -88,7 +88,7 @@ struct ComplexIndexPagingListView: View {
                 }
             )
 
-            PaformanceView()
+            PerformanceView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
 
             if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -134,7 +134,7 @@ struct ComplexIndexPagingListView: View {
     }
     
     @ViewBuilder
-    private func PaformanceView() -> some View {
+    private func PerformanceView() -> some View {
         VStack(alignment: .trailing, spacing: 4) {
             if isLoading {
                 HStack(spacing: 6) {

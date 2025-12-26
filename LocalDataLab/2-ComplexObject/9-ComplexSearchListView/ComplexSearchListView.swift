@@ -66,7 +66,7 @@ struct ComplexSearchListView: View {
         .onAppear {
             loadInitial()
         }
-        .overlay(alignment: .topTrailing) { PaformanceView() }
+        .overlay(alignment: .topTrailing) { PerformanceView() }
         .navigationTitle("\(schools.count)件")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -75,7 +75,7 @@ struct ComplexSearchListView: View {
     }
     
     @ViewBuilder
-    private func PaformanceView() -> some View {
+    private func PerformanceView() -> some View {
         VStack(alignment: .trailing, spacing: 4) {
             if isLoading {
                 HStack(spacing: 6) {

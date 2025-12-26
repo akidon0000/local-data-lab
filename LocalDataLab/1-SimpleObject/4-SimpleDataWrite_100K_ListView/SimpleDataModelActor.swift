@@ -12,7 +12,7 @@ import SwiftData
 actor SimpleDataModelActor {
     
     func fetchAllData() throws -> [SimpleData_100K] {
-        var descriptor = FetchDescriptor<SimpleData_100K>(
+        let descriptor = FetchDescriptor<SimpleData_100K>(
             sortBy: [SortDescriptor(\SimpleData_100K.name, order: .forward)]
         )
         return try modelContext.fetch(descriptor)

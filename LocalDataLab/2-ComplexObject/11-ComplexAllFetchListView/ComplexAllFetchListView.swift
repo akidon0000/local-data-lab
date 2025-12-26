@@ -86,7 +86,7 @@ struct ComplexAllFetchListView: View {
                 .toolbar {
                     ToolbarItemGroup(placement: .navigationBarTrailing) { ToolBarView() }
                 }
-                .overlay(alignment: .topTrailing) { PaformanceView() }
+                .overlay(alignment: .topTrailing) { PerformanceView() }
 
                 .onAppear { startDualFetch() }
             }
@@ -94,7 +94,7 @@ struct ComplexAllFetchListView: View {
     }
 
     @ViewBuilder
-    private func PaformanceView() -> some View {
+    private func PerformanceView() -> some View {
         VStack(alignment: .trailing, spacing: 4) {
             if isLoadingAll || isLoadingPreview {
                 HStack(spacing: 6) {
